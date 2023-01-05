@@ -60,6 +60,13 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         assertEq(createdAgreement.status, AgreementStatus.Created);
     }
 
+    function testDeterministicId(bytes32 termsHash, uint256 criteria, bytes32 salt) public {
+        bytes32 id = keccak256(abi.encode(address(framework), termsHash, salt));
+        bytes32 agreementId = framework.createAgreement(AgreementParams(termsHash, criteria, "ipfs", address(tokenA)), salt);
+
+        assertEq(id, agreementId);
+    }
+
     /* ====================================================================== //
                                     JOIN TESTS
     // ====================================================================== */
