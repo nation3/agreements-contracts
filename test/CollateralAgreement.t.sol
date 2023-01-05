@@ -4,8 +4,10 @@ pragma solidity ^0.8.17;
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import { AgreementParams, AgreementData, PositionData, PositionStatus, AgreementStatus } from "src/interfaces/Agreement.sol";
+import { AgreementParams, PositionParams, AgreementData, PositionData, PositionStatus, AgreementStatus } from "src/interfaces/Agreement.sol";
+import { OnlyArbitrator } from "src/interfaces/IArbitrable.sol";
 import "src/interfaces/AgreementErrors.sol";
+import "src/interfaces/ArbitrationErrors.sol";
 import { InvalidCriteriaProof } from "src/libraries/CriteriaResolution.sol";
 
 import { Test } from "forge-std/Test.sol";
@@ -55,28 +57,36 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         assertEq(createdAgreement.criteria, params.criteria);
         assertEq(createdAgreement.metadataURI, params.metadataURI);
         assertEq(createdAgreement.token, params.token);
-        assertEq(uint256(createdAgreement.status), uint256(AgreementStatus.Created));
+        assertEq(createdAgreement.status, AgreementStatus.Created);
     }
+
+    /* ====================================================================== //
+                                    JOIN TESTS
+    // ====================================================================== */
 
     function testJoinAgreement() public {
         bytes32 agreementId = createAgreement();
-        uint256 bobBalance = ERC20(params.token).balanceOf(bob);
+        uint256 bobBalance = balanceOf(params.token, bob);
 
         bobJoinsAgreement(agreementId);
 
         PositionData[] memory positions = framework.agreementPositions(agreementId);
+        assertPosition(positions[0], bob, bobStake, PositionStatus.Joined);
 
-        assertEq(positions[0].party, bob);
-        assertEq(positions[0].balance, bobStake);
-        assertEq(uint256(positions[0].status), uint256(PositionStatus.Joined));
-
-        assertEq(ERC20(params.token).balanceOf(bob), bobBalance - bobStake);
-        assertEq(ERC20(params.token).balanceOf(address(framework)), bobStake);
-        assertEq(ERC20(tokenB).balanceOf(address(framework)), fees.amount);
+        assertEq(balanceOf(params.token, bob), bobBalance - bobStake);
+        assertEq(balanceOf(params.token, address(framework)), bobStake);
+        assertEq(balanceOf(fees.token, address(framework)), fees.amount);
     }
 
     function testCantJoinNonExistentAgreement(bytes32 id) public {
         aliceExpectsErrorWhenJoining(id, InvalidCriteriaProof.selector);
+    }
+
+    function testCantJoinAgreementWithInvalidCriteria() public {
+        bytes32 agreementId = createAgreement();
+
+        CriteriaResolver memory resolver = CriteriaResolver(alice, 1e17, proofs[alice]);
+        aliceExpectsErrorWhenJoining(agreementId, resolver, InvalidCriteriaProof.selector);
     }
 
     function testCantJoinAgreementMultipleTimes() public {
@@ -86,34 +96,100 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         aliceExpectsErrorWhenJoining(agreementId, PartyAlreadyJoined.selector);
     }
 
+    function testCantJoinDisputedAgreement() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        bobDisputesAgreement(agreementId);
+
+        aliceExpectsErrorWhenJoining(agreementId, AgreementIsDisputed.selector);
+    }
+
+    function testCantJoinFinalizedAgreement() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        vm.prank(bob);
+        framework.finalizeAgreement(agreementId);
+
+        aliceExpectsErrorWhenJoining(agreementId, AgreementIsFinalized.selector);
+    }
+
     function testAgreementStatusOngoing() public {
         bytes32 agreementId = createAgreement();
         bobJoinsAgreement(agreementId);
 
         AgreementData memory agreement = framework.agreementData(agreementId);
-        assertEq(uint256(agreement.status), uint256(AgreementStatus.Ongoing));
+        assertEq(agreement.status, AgreementStatus.Ongoing);
     }
 
-    function testFriendlyFinalization() public {
-        bytes32 agreementId = createAgreement();
+    /* ====================================================================== //
+                                FINALIZATION TESTS
+    // ====================================================================== */
 
+    function testSingleFinalization() public {
+        bytes32 agreementId = createAgreement();
         bobJoinsAgreement(agreementId);
         aliceJoinsAgreement(agreementId);
 
         vm.prank(bob);
         framework.finalizeAgreement(agreementId);
 
-        // Agreement continues to be ongoing
-        AgreementData memory agreement = framework.agreementData(agreementId);
-        assertEq(uint256(agreement.status), uint256(AgreementStatus.Ongoing));
+        PositionData[] memory positions = framework.agreementPositions(agreementId);
+        assertPosition(positions[0], bob, bobStake, PositionStatus.Finalized);
+        assertPosition(positions[1], alice, aliceStake, PositionStatus.Joined);
 
+        AgreementData memory agreement = framework.agreementData(agreementId);
+        assertEq(agreement.status, AgreementStatus.Ongoing);
+    }
+
+    function testFinalizationConsensus() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        aliceJoinsAgreement(agreementId);
+
+        vm.prank(bob);
+        framework.finalizeAgreement(agreementId);
         vm.prank(alice);
         framework.finalizeAgreement(agreementId);
 
         // Agreement is finalized
-        agreement = framework.agreementData(agreementId);
-        assertEq(uint256(agreement.status), uint256(AgreementStatus.Finalized));
+        AgreementData memory agreement = framework.agreementData(agreementId);
+        assertEq(agreement.status, AgreementStatus.Finalized);
     }
+
+    function testOnlyPartyCanFinalizeAgreement() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+
+        aliceExpectsErrorWhenFinalizing(agreementId, NoPartOfAgreement.selector);
+    }
+
+    function testCantFinalizeDisputedAgreement() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        aliceJoinsAgreement(agreementId);
+
+        vm.prank(bob);
+        framework.disputeAgreement(agreementId);
+
+        aliceExpectsErrorWhenFinalizing(agreementId, AgreementIsDisputed.selector);
+    }
+
+    function testCantFinalizeMultipleTimes() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        aliceJoinsAgreement(agreementId);
+
+        vm.startPrank(bob);
+        framework.finalizeAgreement(agreementId);
+
+        vm.expectRevert(PartyAlreadyFinalized.selector);
+        framework.finalizeAgreement(agreementId);
+        vm.stopPrank();
+    }
+
+    /* ====================================================================== //
+                                    DISPUTE TESTS
+    // ====================================================================== */
 
     function testDisputeAgreement() public {
         bytes32 agreementId = createAgreement();
@@ -121,24 +197,127 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         bobJoinsAgreement(agreementId);
         aliceJoinsAgreement(agreementId);
 
-        vm.startPrank(bob);
-        framework.disputeAgreement(agreementId);
-        vm.stopPrank();
+        bobDisputesAgreement(agreementId);
 
         AgreementData memory agreement = framework.agreementData(agreementId);
-        assertEq(uint256(agreement.status), uint256(AgreementStatus.Disputed));
+        assertEq(agreement.status, AgreementStatus.Disputed);
 
         PositionData[] memory positions = framework.agreementPositions(agreementId);
-        assertEq(uint256(positions[0].status), uint256(PositionStatus.Disputed));
-        assertEq(uint256(positions[1].status), uint256(PositionStatus.Joined));
+        assertPosition(positions[0], bob, bobStake, PositionStatus.Disputed);
+        assertPosition(positions[1], alice, aliceStake, PositionStatus.Joined);
 
-        assertEq(ERC20(fees.token).balanceOf(arbitrator), fees.amount);
+        // dispute fees transferred
+        assertEq(balanceOf(fees.token, fees.recipient), fees.amount);
     }
+
+    function testOnlyPartyCanDisputeAgreement() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+
+        vm.prank(alice);
+        vm.expectRevert(NoPartOfAgreement.selector);
+        framework.disputeAgreement(agreementId);
+    }
+
+    function testCantDisputeFinalizedAgreement() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        aliceJoinsAgreement(agreementId);
+
+        vm.prank(bob);
+        framework.finalizeAgreement(agreementId);
+        vm.startPrank(alice);
+        framework.finalizeAgreement(agreementId);
+
+        vm.expectRevert(AgreementIsFinalized.selector);
+        framework.disputeAgreement(agreementId);
+    }
+
+    /* ====================================================================== //
+                              DISPUTE SETTLEMENT TESTS
+    // ====================================================================== */
+
+    function testSettlement() public {
+        bytes32 disputeId = createDispute();
+        PositionParams[] memory settlement = getValidSettlement();
+
+        vm.prank(arbitrator);
+        framework.settleDispute(disputeId, settlement);
+
+        AgreementData memory agreement = framework.agreementData(disputeId);
+        assertEq(agreement.status, AgreementStatus.Finalized);
+
+        PositionData[] memory positions = framework.agreementPositions(disputeId);
+        assertPosition(positions[0], bob, settlement[0].balance, PositionStatus.Finalized);
+        assertPosition(positions[1], alice, settlement[1].balance, PositionStatus.Finalized);
+    }
+
+    function testOnlyCanSettleDisputedAgreements() public {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        aliceJoinsAgreement(agreementId);
+        PositionParams[] memory settlement = getValidSettlement();
+
+        vm.prank(arbitrator);
+        vm.expectRevert(AgreementNotDisputed.selector);
+        framework.settleDispute(agreementId, settlement);
+    }
+
+    function testOnlyArbitratorCanSettleDispute(address account) public {
+        if (account == arbitrator) return;
+
+        bytes32 disputeId = createDispute();
+        PositionParams[] memory settlement = getValidSettlement();
+
+        vm.prank(account);
+        vm.expectRevert(OnlyArbitrator.selector);
+        framework.settleDispute(disputeId, settlement);
+    }
+
+    function testSettlementMustMatchBalance() public {
+        bytes32 disputeId = createDispute();
+        PositionParams[] memory settlement = getValidSettlement();
+        settlement[1].balance = aliceStake + bobStake;
+
+        vm.prank(arbitrator);
+        vm.expectRevert(SettlementBalanceMustMatch.selector);
+        framework.settleDispute(disputeId, settlement);
+
+        settlement[0].balance = 0;
+        settlement[1].balance = bobStake;
+
+        vm.prank(arbitrator);
+        vm.expectRevert(SettlementBalanceMustMatch.selector);
+        framework.settleDispute(disputeId, settlement);
+    }
+
+    function testSettlementMustMatchPositions() public {
+        bytes32 disputeId = createDispute();
+        PositionParams[] memory settlement = new PositionParams[](3);
+        settlement[0] = PositionParams(bob, 0);
+        settlement[1] = PositionParams(alice, aliceStake);
+        settlement[2] = PositionParams(arbitrator, bobStake);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(SettlementPositionsMustMatch.selector);
+        framework.settleDispute(disputeId, settlement);
+
+        settlement = new PositionParams[](1);
+        settlement[0] = PositionParams(arbitrator, bobStake + aliceStake);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(SettlementPositionsMustMatch.selector);
+        framework.settleDispute(disputeId, settlement);
+    }
+
+    /* ====================================================================== //
+                             AGREEMENT WITHDRAWAL TESTS
+    // ====================================================================== */
 
     function testWithdrawFromAgreement() public {
         bytes32 agreementId = createAgreement();
-        uint256 beforeBalance = ERC20(params.token).balanceOf(bob);
-        uint256 beforeDeposit = ERC20(fees.token).balanceOf(bob);
+        uint256 beforeBalance = balanceOf(params.token, bob);
+        uint256 beforeDepositBalance = balanceOf(fees.token, bob);
 
         bobJoinsAgreement(agreementId);
         vm.startPrank(bob);
@@ -146,8 +325,35 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         framework.withdrawFromAgreement(agreementId);
         vm.stopPrank();
 
-        assertEq(ERC20(params.token).balanceOf(bob), beforeBalance);
-        assertEq(ERC20(fees.token).balanceOf(bob), beforeDeposit);
+        // bob withdraws his collateral & deposit
+        assertEq(balanceOf(params.token, bob), beforeBalance);
+        assertEq(balanceOf(fees.token, bob), beforeDepositBalance);
+    }
+
+    function testWithdrawAfterSettlement() public {
+        bytes32 disputeId = createDispute();
+        uint256 bobBalance = balanceOf(params.token, bob);
+        uint256 bobDepositBalance = balanceOf(fees.token, bob);
+        uint256 aliceBalance = balanceOf(params.token, alice);
+        uint256 aliceDepositBalance = balanceOf(fees.token, alice);
+ 
+        PositionParams[] memory settlement = getValidSettlement();
+
+        vm.prank(arbitrator);
+        framework.settleDispute(disputeId, settlement);
+
+        vm.prank(bob);
+        framework.withdrawFromAgreement(disputeId);
+        vm.prank(alice);
+        framework.withdrawFromAgreement(disputeId);
+
+        // bob withdraws his collateral but no deposit
+        assertEq(bobBalance, balanceOf(params.token, bob) - settlement[0].balance);
+        assertEq(bobDepositBalance, balanceOf(fees.token, bob));
+
+        // alice withdraws her collateral & deposit
+        assertEq(aliceBalance, balanceOf(params.token, alice) - settlement[1].balance);
+        assertEq(aliceDepositBalance + fees.amount, balanceOf(fees.token, alice));
     }
 
     /* ---------------------------------------------------------------------- */
@@ -155,6 +361,17 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
     function createAgreement() internal returns (bytes32 agreementId) {
         setDefaultAgreementParams();
         agreementId = framework.createAgreement(params, bytes32(""));
+    }
+
+    function createDispute() internal returns (bytes32 disputeId) {
+        bytes32 agreementId = createAgreement();
+        bobJoinsAgreement(agreementId);
+        aliceJoinsAgreement(agreementId);
+
+        vm.prank(bob);
+        framework.disputeAgreement(agreementId);
+
+        disputeId = agreementId;
     }
 
     function bobJoinsAgreement(bytes32 agreementId) internal {
@@ -166,6 +383,12 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
 
         vm.prank(bob);
         framework.joinAgreement(agreementId, resolver, permit, signature);
+    }
+
+    function bobDisputesAgreement(bytes32 agreementId) internal {
+        vm.startPrank(bob);
+        framework.disputeAgreement(agreementId);
+        vm.stopPrank();
     }
 
     function aliceJoinsAgreement(bytes32 agreementId) internal {
@@ -191,6 +414,24 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         framework.joinAgreement(agreementId, resolver, permit, signature);
     }
 
+    function aliceExpectsErrorWhenJoining(bytes32 agreementId, CriteriaResolver memory resolver, bytes4 error) internal {
+        (
+            ,
+            ISignatureTransfer.PermitBatchTransferFrom memory permit,
+            bytes memory signature
+        ) = getAliceJoinParams();
+
+        vm.prank(alice);
+        vm.expectRevert(error);
+        framework.joinAgreement(agreementId, resolver, permit, signature);
+    }
+
+    function aliceExpectsErrorWhenFinalizing(bytes32 agreementId, bytes4 error) internal {
+        vm.prank(alice);
+        vm.expectRevert(error);
+        framework.finalizeAgreement(agreementId);
+    }
+
     function getAliceJoinParams() internal view returns (
        CriteriaResolver memory resolver,
        ISignatureTransfer.PermitBatchTransferFrom memory permit,
@@ -209,6 +450,12 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         tokenPairs[1] = TokenPair(address(tokenA), collateral);
     }
 
+    function getValidSettlement() internal view returns(PositionParams[] memory settlement) {
+        settlement = new PositionParams[](2);
+        settlement[0] = PositionParams(bob, bobStake + aliceStake);
+        settlement[1] = PositionParams(alice, 0);
+    }
+
     function setDefaultAgreementParams() internal {
         setDefaultCriteria();
         params = AgreementParams({
@@ -217,5 +464,33 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
             metadataURI: "ipfs://sha256",
             token: address(tokenA)
         });
+    }
+
+    function assertEq(PositionStatus a, PositionStatus b) internal {
+        if (uint256(a) != uint256(b)) {
+            emit log("Error: a == b not satisfied [PositionStatus]");
+            emit log_named_uint("  Expected", uint256(b));
+            emit log_named_uint("    Actual", uint256(a));
+            fail();
+        }
+    }
+
+    function assertEq(AgreementStatus a, AgreementStatus b) internal {
+        if (uint256(a) != uint256(b)) {
+            emit log("Error: a == b not satisfied [AgreementStatus]");
+            emit log_named_uint("  Expected", uint256(b));
+            emit log_named_uint("    Actual", uint256(a));
+            fail();
+        }
+    }
+
+    function assertPosition(PositionData memory position, address party, uint256 balance, PositionStatus status) internal {
+        assertEq(position.party, party);
+        assertEq(position.balance, balance);
+        assertEq(position.status, status);
+    }
+
+    function balanceOf(address token, address account) internal view returns (uint256 balance) {
+        balance = ERC20(token).balanceOf(account);
     }
 }

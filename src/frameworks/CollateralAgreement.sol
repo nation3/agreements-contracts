@@ -162,7 +162,6 @@ contract CollateralAgreementFramework is IAgreementFramework {
         emit AgreementCreated(id, params.termsHash, params.criteria, params.metadataURI, params.token);
     }
 
-
     /// @inheritdoc IAgreementFramework
     function joinAgreement(
         bytes32 id,
