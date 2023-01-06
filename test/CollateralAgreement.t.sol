@@ -21,7 +21,7 @@ import { PermitSignature, TokenPair } from "test/utils/PermitSignature.sol";
 import { TokenProvider } from "test/utils/TokenProvider.sol";
 
 import { CriteriaResolver } from "src/libraries/CriteriaResolution.sol";
-import { CollateralAgreementFramework, FeeConfig } from "src/frameworks/CollateralAgreement.sol";
+import { CollateralAgreementFramework, TransferConfig } from "src/frameworks/CollateralAgreement.sol";
 
 contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvider, PermitSignature {
     using SafeCast160 for uint256;
@@ -31,16 +31,16 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
     bytes32 DOMAIN_SEPARATOR;
 
     AgreementParams params;
-    FeeConfig fees;
+    TransferConfig deposits;
 
     function setUp() public {
         initializeERC20Tokens();
         DOMAIN_SEPARATOR = permit2.DOMAIN_SEPARATOR();
-        fees = FeeConfig(address(tokenB), 1e17, arbitrator);
+        deposits = TransferConfig(address(tokenB), 1e17, arbitrator);
 
-        framework = new CollateralAgreementFramework();
+        framework = new CollateralAgreementFramework(permit2);
 
-        framework.setUp(permit2, arbitrator, fees);
+        framework.setUp(arbitrator, deposits);
 
         setERC20TestTokens(bob);
         setERC20TestTokens(alice);
@@ -82,7 +82,7 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
 
         assertEq(balanceOf(params.token, bob), bobBalance - bobStake);
         assertEq(balanceOf(params.token, address(framework)), bobStake);
-        assertEq(balanceOf(fees.token, address(framework)), fees.amount);
+        assertEq(balanceOf(deposits.token, address(framework)), deposits.amount);
     }
 
     function testCantJoinNonExistentAgreement(bytes32 id) public {
@@ -213,8 +213,8 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
         assertPosition(positions[0], bob, bobStake, PositionStatus.Disputed);
         assertPosition(positions[1], alice, aliceStake, PositionStatus.Joined);
 
-        // dispute fees transferred
-        assertEq(balanceOf(fees.token, fees.recipient), fees.amount);
+        // dispute deposits transferred
+        assertEq(balanceOf(deposits.token, deposits.recipient), deposits.amount);
     }
 
     function testOnlyPartyCanDisputeAgreement() public {
@@ -324,7 +324,7 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
     function testWithdrawFromAgreement() public {
         bytes32 agreementId = createAgreement();
         uint256 beforeBalance = balanceOf(params.token, bob);
-        uint256 beforeDepositBalance = balanceOf(fees.token, bob);
+        uint256 beforeDepositBalance = balanceOf(deposits.token, bob);
 
         bobJoinsAgreement(agreementId);
         vm.startPrank(bob);
@@ -334,15 +334,15 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
 
         // bob withdraws his collateral & deposit
         assertEq(balanceOf(params.token, bob), beforeBalance);
-        assertEq(balanceOf(fees.token, bob), beforeDepositBalance);
+        assertEq(balanceOf(deposits.token, bob), beforeDepositBalance);
     }
 
     function testWithdrawAfterSettlement() public {
         bytes32 disputeId = createDispute();
         uint256 bobBalance = balanceOf(params.token, bob);
-        uint256 bobDepositBalance = balanceOf(fees.token, bob);
+        uint256 bobDepositBalance = balanceOf(deposits.token, bob);
         uint256 aliceBalance = balanceOf(params.token, alice);
-        uint256 aliceDepositBalance = balanceOf(fees.token, alice);
+        uint256 aliceDepositBalance = balanceOf(deposits.token, alice);
  
         PositionParams[] memory settlement = getValidSettlement();
 
@@ -356,11 +356,11 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
 
         // bob withdraws his collateral but no deposit
         assertEq(bobBalance, balanceOf(params.token, bob) - settlement[0].balance);
-        assertEq(bobDepositBalance, balanceOf(fees.token, bob));
+        assertEq(bobDepositBalance, balanceOf(deposits.token, bob));
 
         // alice withdraws her collateral & deposit
         assertEq(aliceBalance, balanceOf(params.token, alice) - settlement[1].balance);
-        assertEq(aliceDepositBalance + fees.amount, balanceOf(fees.token, alice));
+        assertEq(aliceDepositBalance + deposits.amount, balanceOf(deposits.token, alice));
     }
 
     /* ---------------------------------------------------------------------- */
@@ -453,7 +453,7 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
 
     function getJoinTokenPairs(uint256 collateral) internal view returns (TokenPair[] memory tokenPairs){
         tokenPairs = new TokenPair[](2);
-        tokenPairs[0] = TokenPair(address(tokenB), fees.amount);
+        tokenPairs[0] = TokenPair(address(tokenB), deposits.amount);
         tokenPairs[1] = TokenPair(address(tokenA), collateral);
     }
 

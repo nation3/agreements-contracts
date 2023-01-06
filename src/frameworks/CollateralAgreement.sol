@@ -20,6 +20,9 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {Permit2} from "permit2/src/Permit2.sol";
 import {CriteriaResolver, CriteriaResolution} from "src/libraries/CriteriaResolution.sol";
+import { Owned } from "src/utils/Owned.sol";
+
+import {AgreementFramework} from "src/frameworks/AgreementFramework.sol";
 
 /// @notice Data structure for positions in the agreement.
 struct Position {
@@ -27,7 +30,7 @@ struct Position {
     address party;
     /// @dev Amount of agreement tokens in the position.
     uint256 balance;
-    /// @dev Amount of fee tokens deposited for dispute.
+    /// @dev Amount of tokens deposited for dispute.
     uint256 deposit;
     /// @dev Status of the position.
     PositionStatus status;
@@ -55,39 +58,40 @@ struct Agreement {
     mapping(address => Position) position;
 }
 
-/// @dev Data estructure to configure framework fees.
-struct FeeConfig {
-    /// @dev Address of the ERC20 token used for fees.
+/// @dev Data estructure to configure token transfers.
+struct TransferConfig {
+    /// @dev Address of the ERC20 token used for transfer.
     address token;
-    /// @dev Amount of tokens to charge as fee.
+    /// @dev Amount of tokens to transfer.
     uint256 amount;
-    /// @dev Address recipient of the fees collected.
+    /// @dev Address recipient of the tokens transferred.
     address recipient;
 }
 
-contract CollateralAgreementFramework is IAgreementFramework {
+contract CollateralAgreementFramework is AgreementFramework {
     using SafeTransferLib for ERC20;
 
     /// @notice Address of the Permit2 contract deployment.
     Permit2 public permit2;
 
-    /// @notice Fees configuration.
-    FeeConfig public fees;
-
-    /// @inheritdoc IArbitrable
-    address public arbitrator;
+    /// @notice Dispute deposits configuration.
+    TransferConfig public deposits;
 
     /// @dev Agreements by id
     mapping(bytes32 => Agreement) internal agreement;
 
-    /// @notice Set up framework params;
-    /// @param permit2_ Address of the Permti2 contract deployment.
-    /// @param arbitrator_ Address allowed to settle disputes.
-    /// @param fees_ Configuration of the framework's fees in FeeConfig format.
-    function setUp(Permit2 permit2_, address arbitrator_, FeeConfig calldata fees_) external {
+    constructor(Permit2 permit2_) Owned(msg.sender) {
         permit2 = permit2_;
+    }
+
+    /// @notice Set up framework params;
+    /// @param arbitrator_ Address allowed to settle disputes.
+    /// @param deposits_ Configuration of the framework's deposits in TransferConfig format.
+    function setUp(address arbitrator_, TransferConfig calldata deposits_) external onlyOwner {
+        deposits = deposits_;
         arbitrator = arbitrator_;
-        fees = fees_;
+
+        emit ArbitrationTransferred(arbitrator_);
     }
 
     /* ====================================================================== */
@@ -171,17 +175,17 @@ contract CollateralAgreementFramework is IAgreementFramework {
     ) external override {
         Agreement storage agreement_ = agreement[id];
         _canJoinAgreement(agreement_, resolver);
-        FeeConfig memory fee = fees;
+        TransferConfig memory deposit = deposits;
 
         // validate permit tokens & generate transfer details
-        if (permit.permitted[0].token != fee.token) revert InvalidPermit();
+        if (permit.permitted[0].token != deposit.token) revert InvalidPermit();
         if (permit.permitted[1].token != agreement_.token) revert InvalidPermit();
         ISignatureTransfer.SignatureTransferDetails[] memory transferDetails =
-            _transferDetails(resolver.balance, fee.amount);
+            _transferDetails(resolver.balance, deposit.amount);
 
         permit2.permitTransferFrom(permit, transferDetails, msg.sender, signature);
 
-        _addPosition(agreement_, PositionParams(msg.sender, resolver.balance), fee.amount);
+        _addPosition(agreement_, PositionParams(msg.sender, resolver.balance), deposit.amount);
 
         emit AgreementJoined(id, msg.sender, resolver.balance);
     }
@@ -206,14 +210,16 @@ contract CollateralAgreementFramework is IAgreementFramework {
 
         _canDisputeAgreement(agreement_);
 
-        FeeConfig memory fee = fees;
+        TransferConfig memory deposit = deposits;
         Position storage position = agreement_.position[msg.sender];
+        uint256 disputeDeposit = position.deposit;
 
-        SafeTransferLib.safeTransfer(ERC20(fee.token), fee.recipient, position.deposit);
-
+        // update agreement & position
         agreement_.disputed = true;
         position.status = PositionStatus.Disputed;
         position.deposit = 0;
+
+        SafeTransferLib.safeTransfer(ERC20(deposit.token), deposit.recipient, disputeDeposit);
 
         emit AgreementDisputed(id, msg.sender);
     }
@@ -222,6 +228,7 @@ contract CollateralAgreementFramework is IAgreementFramework {
     /// @dev Requires the agreement to be finalized.
     function withdrawFromAgreement(bytes32 id) external override {
         Agreement storage agreement_ = agreement[id];
+        TransferConfig memory deposit = deposits;
 
         if (!_isFinalized(agreement_)) revert AgreementNotFinalized();
         if (!_isPartOfAgreement(agreement_, msg.sender)) revert NoPartOfAgreement();
@@ -229,12 +236,14 @@ contract CollateralAgreementFramework is IAgreementFramework {
         Position storage position = agreement_.position[msg.sender];
         uint256 withdrawBalance = position.balance;
         uint256 withdrawDeposit = position.deposit;
+
+        // update position
         position.balance = 0;
         position.deposit = 0;
         position.status = PositionStatus.Withdrawn;
 
         SafeTransferLib.safeTransfer(ERC20(agreement_.token), msg.sender, withdrawBalance);
-        SafeTransferLib.safeTransfer(ERC20(fees.token), msg.sender, withdrawDeposit);
+        SafeTransferLib.safeTransfer(ERC20(deposit.token), msg.sender, withdrawDeposit);
 
         emit AgreementPositionUpdated(id, msg.sender, 0, PositionStatus.Withdrawn);
     }
@@ -247,8 +256,9 @@ contract CollateralAgreementFramework is IAgreementFramework {
     /// @dev Allows the arbitrator to finalize an agreement in dispute with the provided set of positions.
     /// @dev The provided settlement parties must match the parties of the agreement and the total balance of the settlement must match the previous agreement balance.
     function settleDispute(bytes32 id, PositionParams[] calldata settlement) external override {
-        Agreement storage agreement_ = agreement[id];
         if (msg.sender != arbitrator) revert OnlyArbitrator();
+
+        Agreement storage agreement_ = agreement[id];
         if (!agreement_.disputed) revert AgreementNotDisputed();
         if (_isFinalized(agreement_)) revert AgreementIsFinalized();
 
@@ -324,9 +334,9 @@ contract CollateralAgreementFramework is IAgreementFramework {
         return ((agreement_.party.length > 0) && (agreement_.position[account].party == account));
     }
 
-    /// @dev Fill Permit2 transferDetails array for fees & collateral transfer
+    /// @dev Fill Permit2 transferDetails array for deposits & collateral transfer
     /// @param collateral Amount of collateral token
-    /// @param deposit Amount of fees token
+    /// @param deposit Amount of deposits token
     function _transferDetails(uint256 collateral, uint256 deposit)
         internal
         view
