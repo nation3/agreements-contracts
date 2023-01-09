@@ -5,7 +5,7 @@ import { Vm, Test } from "forge-std/Test.sol";
 import { Merkle } from "murky/Merkle.sol";
 import { TestConstants } from "test/utils/Constants.sol";
 
-import { AgreementParams, PositionParams } from "src/interfaces/Agreement.sol";
+import { AgreementParams, PositionParams } from "src/interfaces/AgreementTypes.sol";
 
 contract CriteriaProvider is Test, TestConstants {
     Merkle merkle = new Merkle();

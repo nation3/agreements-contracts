@@ -3,8 +3,8 @@ pragma solidity ^0.8.17;
 
 import {ISignatureTransfer} from "permit2/src/interfaces/ISignatureTransfer.sol";
 import {IArbitrable} from "src/interfaces/IArbitrable.sol";
-import {CriteriaResolver} from "src/interfaces/Criteria.sol";
-import {PositionStatus, AgreementStatus, PositionData, AgreementData} from "src/interfaces/Agreement.sol";
+import {CriteriaResolver} from "src/interfaces/CriteriaTypes.sol";
+import {PositionStatus, AgreementStatus, PositionData, AgreementData} from "src/interfaces/AgreementTypes.sol";
 
 interface IAgreementFramework is IArbitrable {
     /// @dev Raised when a new agreement is created.

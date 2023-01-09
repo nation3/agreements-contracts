@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import {CriteriaResolver} from "src/interfaces/Criteria.sol";
+import {CriteriaResolver} from "src/interfaces/CriteriaTypes.sol";
 
 /// @dev Thrown when the proof provided can't be verified against the criteria tree.
 error InvalidCriteriaProof();

@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import { AgreementParams, PositionParams, AgreementData, PositionData, PositionStatus, AgreementStatus } from "src/interfaces/Agreement.sol";
+import { AgreementParams, PositionParams, AgreementData, PositionData, PositionStatus, AgreementStatus } from "src/interfaces/AgreementTypes.sol";
 import { OnlyArbitrator } from "src/interfaces/IArbitrable.sol";
 import "src/interfaces/AgreementErrors.sol";
 import "src/interfaces/ArbitrationErrors.sol";

@@ -12,7 +12,7 @@ import {
     AgreementStatus,
     PositionData,
     AgreementData
-} from "src/interfaces/Agreement.sol";
+} from "src/interfaces/AgreementTypes.sol";
 import "src/interfaces/AgreementErrors.sol";
 import "src/interfaces/ArbitrationErrors.sol";
 
@@ -20,7 +20,7 @@ import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 import {Permit2} from "permit2/src/Permit2.sol";
 import {CriteriaResolver, CriteriaResolution} from "src/libraries/CriteriaResolution.sol";
-import { Owned } from "src/utils/Owned.sol";
+import {Owned} from "src/utils/Owned.sol";
 
 import {AgreementFramework} from "src/frameworks/AgreementFramework.sol";
 
