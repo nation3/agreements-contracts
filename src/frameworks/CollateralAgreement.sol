@@ -3,26 +3,27 @@ pragma solidity ^0.8.17;
 
 import {IAllowanceTransfer} from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import {ISignatureTransfer} from "permit2/src/interfaces/ISignatureTransfer.sol";
-import {IArbitrable, OnlyArbitrator} from "src/interfaces/IArbitrable.sol";
-import {IAgreementFramework} from "src/interfaces/IAgreementFramework.sol";
+
+import {Permit2} from "permit2/src/Permit2.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
+
 import {
+    AgreementData,
     AgreementParams,
-    PositionParams,
-    PositionStatus,
     AgreementStatus,
     PositionData,
-    AgreementData
+    PositionParams,
+    PositionStatus
 } from "src/interfaces/AgreementTypes.sol";
 import "src/interfaces/AgreementErrors.sol";
 import {SettlementPositionsMustMatch, SettlementBalanceMustMatch} from "src/interfaces/ArbitrationErrors.sol";
-
-import {ERC20} from "solmate/src/tokens/ERC20.sol";
-import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
-import {Permit2} from "permit2/src/Permit2.sol";
-import {CriteriaResolver, CriteriaResolution} from "src/libraries/CriteriaResolution.sol";
-import {Owned} from "src/utils/Owned.sol";
+import {IAgreementFramework} from "src/interfaces/IAgreementFramework.sol";
+import {IArbitrable, OnlyArbitrator} from "src/interfaces/IArbitrable.sol";
 
 import {AgreementFramework} from "src/frameworks/AgreementFramework.sol";
+import {CriteriaResolver, CriteriaResolution} from "src/libraries/CriteriaResolution.sol";
+import {Owned} from "src/utils/Owned.sol";
 
 /// @notice Data structure for positions in the agreement.
 struct Position {
@@ -30,7 +31,7 @@ struct Position {
     address party;
     /// @dev Amount of agreement tokens in the position.
     uint256 balance;
-    /// @dev Amount of tokens deposited for dispute.
+    /// @dev Amount of tokens deposited for dispute costs.
     uint256 deposit;
     /// @dev Status of the position.
     PositionStatus status;
@@ -80,20 +81,6 @@ contract CollateralAgreementFramework is AgreementFramework {
     /// @dev Agreements by id
     mapping(bytes32 => Agreement) internal agreement;
 
-    constructor(Permit2 permit2_) Owned(msg.sender) {
-        permit2 = permit2_;
-    }
-
-    /// @notice Set up framework params;
-    /// @param arbitrator_ Address allowed to settle disputes.
-    /// @param deposits_ Configuration of the framework's deposits in TransferConfig format.
-    function setUp(address arbitrator_, TransferConfig calldata deposits_) external onlyOwner {
-        deposits = deposits_;
-        arbitrator = arbitrator_;
-
-        emit ArbitrationTransferred(arbitrator_);
-    }
-
     /* ====================================================================== */
     /*                                  VIEWS
     /* ====================================================================== */
@@ -131,19 +118,22 @@ contract CollateralAgreementFramework is AgreementFramework {
         return positions;
     }
 
-    /// @dev Retrieve a simplified status of the agreement from its attributes.
-    function _agreementStatus(Agreement storage agreement_) internal view virtual returns (AgreementStatus) {
-        if (agreement_.party.length > 0) {
-            if (agreement_.finalizations >= agreement_.party.length) {
-                return AgreementStatus.Finalized;
-            }
-            if (agreement_.disputed) return AgreementStatus.Disputed;
-            // else
-            return AgreementStatus.Ongoing;
-        } else if (agreement_.criteria != 0) {
-            return AgreementStatus.Created;
-        }
-        revert NonExistentAgreement();
+    /* ====================================================================== */
+    /*                                  SETUP
+    /* ====================================================================== */
+
+    constructor(Permit2 permit2_) Owned(msg.sender) {
+        permit2 = permit2_;
+    }
+
+    /// @notice Set up framework params;
+    /// @param arbitrator_ Address allowed to settle disputes.
+    /// @param deposits_ Configuration of the framework's deposits in DepositConfig format.
+    function setUp(address arbitrator_, DepositConfig calldata deposits_) external onlyOwner {
+        deposits = deposits_;
+        arbitrator = arbitrator_;
+
+        emit ArbitrationTransferred(arbitrator_);
     }
 
     /* ====================================================================== */
@@ -175,7 +165,7 @@ contract CollateralAgreementFramework is AgreementFramework {
     ) external override {
         Agreement storage agreement_ = agreement[id];
         _canJoinAgreement(agreement_, resolver);
-        TransferConfig memory deposit = deposits;
+        DepositConfig memory deposit = deposits;
 
         // validate permit tokens & generate transfer details
         if (permit.permitted[0].token != deposit.token) revert InvalidPermit();
@@ -210,7 +200,7 @@ contract CollateralAgreementFramework is AgreementFramework {
 
         _canDisputeAgreement(agreement_);
 
-        TransferConfig memory deposit = deposits;
+        DepositConfig memory deposit = deposits;
         Position storage position = agreement_.position[msg.sender];
         uint256 disputeDeposit = position.deposit;
 
@@ -228,7 +218,7 @@ contract CollateralAgreementFramework is AgreementFramework {
     /// @dev Requires the agreement to be finalized.
     function withdrawFromAgreement(bytes32 id) external override {
         Agreement storage agreement_ = agreement[id];
-        TransferConfig memory deposit = deposits;
+        DepositConfig memory deposit = deposits;
 
         if (!_isFinalized(agreement_)) revert AgreementNotFinalized();
         if (!_isPartOfAgreement(agreement_, msg.sender)) revert NoPartOfAgreement();
@@ -286,6 +276,21 @@ contract CollateralAgreementFramework is AgreementFramework {
     /* ====================================================================== */
     /*                              INTERNAL LOGIC
     /* ====================================================================== */
+
+    /// @dev Retrieve a simplified status of the agreement from its attributes.
+    function _agreementStatus(Agreement storage agreement_) internal view virtual returns (AgreementStatus) {
+        if (agreement_.party.length > 0) {
+            if (agreement_.finalizations >= agreement_.party.length) {
+                return AgreementStatus.Finalized;
+            }
+            if (agreement_.disputed) return AgreementStatus.Disputed;
+            // else
+            return AgreementStatus.Ongoing;
+        } else if (agreement_.criteria != 0) {
+            return AgreementStatus.Created;
+        }
+        revert NonExistentAgreement();
+    }
 
     /// @dev Check if caller can join an agreement with the criteria resolver provided.
     /// @param agreement_ Agreement to check.

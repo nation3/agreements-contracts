@@ -1,25 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
+import { Test } from "forge-std/Test.sol";
+
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import { AgreementParams, PositionParams, AgreementData, PositionData, PositionStatus, AgreementStatus } from "src/interfaces/AgreementTypes.sol";
-import { OnlyArbitrator } from "src/interfaces/IArbitrable.sol";
-import "src/interfaces/AgreementErrors.sol";
-import "src/interfaces/ArbitrationErrors.sol";
-import { InvalidCriteriaProof } from "src/libraries/CriteriaResolution.sol";
-
-import { Test } from "forge-std/Test.sol";
-import { ERC20 } from "solmate/src/tokens/ERC20.sol";
-import { Permit2 } from "permit2/src/Permit2.sol";
 import { SafeCast160 } from "permit2/src/libraries/SafeCast160.sol";
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
+import { Permit2 } from "permit2/src/Permit2.sol";
+import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 
 import { CriteriaProvider } from "test/utils/AgreementProvider.sol";
 import { PermitSignature, TokenPair } from "test/utils/PermitSignature.sol";
 import { TokenProvider } from "test/utils/TokenProvider.sol";
 
+
+import { AgreementParams, PositionParams, AgreementData, PositionData, PositionStatus, AgreementStatus } from "src/interfaces/AgreementTypes.sol";
+import "src/interfaces/AgreementErrors.sol";
+import {SettlementPositionsMustMatch, SettlementBalanceMustMatch } from "src/interfaces/ArbitrationErrors.sol";
+import { CriteriaResolver } from "src/interfaces/CriteriaTypes.sol";
+import { OnlyArbitrator } from "src/interfaces/IArbitrable.sol";
+
+import { InvalidCriteriaProof } from "src/libraries/CriteriaResolution.sol";
 import { CriteriaResolver } from "src/libraries/CriteriaResolution.sol";
 import { CollateralAgreementFramework, DepositConfig } from "src/frameworks/CollateralAgreement.sol";
 
