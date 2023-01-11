@@ -4,8 +4,6 @@ pragma solidity ^0.8.17;
 import { Vm, Test } from "forge-std/Test.sol";
 
 contract TestConstants is Test {
-
-    address arbitrator = address(0xB055);
     address bob = vm.addr(0xB0B);
     address alice = vm.addr(0xA11CE);
 

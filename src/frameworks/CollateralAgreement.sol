@@ -14,7 +14,7 @@ import {
     AgreementData
 } from "src/interfaces/AgreementTypes.sol";
 import "src/interfaces/AgreementErrors.sol";
-import "src/interfaces/ArbitrationErrors.sol";
+import {SettlementPositionsMustMatch, SettlementBalanceMustMatch} from "src/interfaces/ArbitrationErrors.sol";
 
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
@@ -58,13 +58,13 @@ struct Agreement {
     mapping(address => Position) position;
 }
 
-/// @dev Data estructure to configure token transfers.
-struct TransferConfig {
-    /// @dev Address of the ERC20 token used for transfer.
+/// @dev Data estructure to configure dispute deposits.
+struct DepositConfig {
+    /// @dev Address of the ERC20 token used for deposits.
     address token;
-    /// @dev Amount of tokens to transfer.
+    /// @dev Amount of tokens to deposit.
     uint256 amount;
-    /// @dev Address recipient of the tokens transferred.
+    /// @dev Address recipient of the deposit in case of dispute.
     address recipient;
 }
 
@@ -75,7 +75,7 @@ contract CollateralAgreementFramework is AgreementFramework {
     Permit2 public permit2;
 
     /// @notice Dispute deposits configuration.
-    TransferConfig public deposits;
+    DepositConfig public deposits;
 
     /// @dev Agreements by id
     mapping(bytes32 => Agreement) internal agreement;

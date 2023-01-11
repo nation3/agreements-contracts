@@ -26,7 +26,7 @@ abstract contract Owned {
         emit OwnershipTransferred(msg.sender, owner_);
     }
 
-    /// @notice Transfer the ownership of the agreement.
+    /// @notice Transfer the ownership of the contract.
     /// @param newOwner Address of the new owner.
     function transferOwnership(address newOwner) public virtual onlyOwner {
         owner = newOwner;

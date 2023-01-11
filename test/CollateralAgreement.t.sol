@@ -21,7 +21,8 @@ import { PermitSignature, TokenPair } from "test/utils/PermitSignature.sol";
 import { TokenProvider } from "test/utils/TokenProvider.sol";
 
 import { CriteriaResolver } from "src/libraries/CriteriaResolution.sol";
-import { CollateralAgreementFramework, TransferConfig } from "src/frameworks/CollateralAgreement.sol";
+import { CollateralAgreementFramework, DepositConfig } from "src/frameworks/CollateralAgreement.sol";
+
 
 contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvider, PermitSignature {
     using SafeCast160 for uint256;
@@ -29,14 +30,15 @@ contract CollateralAgreementFrameworkTest is Test, TokenProvider, CriteriaProvid
     CollateralAgreementFramework framework;
 
     bytes32 DOMAIN_SEPARATOR;
+    address arbitrator = address(0xB055);
 
     AgreementParams params;
-    TransferConfig deposits;
+    DepositConfig deposits;
 
     function setUp() public {
         initializeERC20Tokens();
         DOMAIN_SEPARATOR = permit2.DOMAIN_SEPARATOR();
-        deposits = TransferConfig(address(tokenB), 1e17, arbitrator);
+        deposits = DepositConfig(address(tokenB), 1e17, arbitrator);
 
         framework = new CollateralAgreementFramework(permit2);
 
