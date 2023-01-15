@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import {ISignatureTransfer} from "permit2/src/interfaces/ISignatureTransfer.sol";
 import {IArbitrable} from "src/interfaces/IArbitrable.sol";
 import {CriteriaResolver} from "src/interfaces/CriteriaTypes.sol";
-import {PositionStatus, AgreementStatus, PositionData, AgreementData} from "src/interfaces/AgreementTypes.sol";
+import {AgreementData, AgreementStatus, PositionData, PositionParams, PositionStatus} from "src/interfaces/AgreementTypes.sol";
 
 interface IAgreementFramework is IArbitrable {
     /// @dev Raised when a new agreement is created.
@@ -46,6 +46,18 @@ interface IAgreementFramework is IArbitrable {
         bytes32 id,
         CriteriaResolver calldata resolver,
         ISignatureTransfer.PermitBatchTransferFrom memory permit,
+        bytes calldata signature
+    ) external;
+
+    /// @notice Adjust a position part of an agreement.
+    /// @param id Id of the agreement to adjust the position from.
+    /// @param newPosition Position params to adjust.
+    /// @param permit Permit2 permit to allow the required token transfers.
+    /// @param signature Signature of the permit.
+    function adjustPosition(
+        bytes32 id,
+        PositionParams calldata newPosition,
+        ISignatureTransfer.PermitTransferFrom memory permit,
         bytes calldata signature
     ) external;
 

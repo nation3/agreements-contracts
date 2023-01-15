@@ -3,6 +3,8 @@ pragma solidity ^0.8.17;
 
 /// @notice Thrown when trying to access to an agreement that doesn't exist.
 error NonExistentAgreement();
+/// @notice Thrown when trying to override an already existing agreement.
+error AlreadyExistentAgreement();
 /// @notice Thrown when trying to perform an invalid operation on a disputed agreement.
 error AgreementIsDisputed();
 /// @notice Thrown when trying to perform an invalid operation on a finalized agreement.
@@ -22,3 +24,5 @@ error PartyAlreadyFinalized();
 error InvalidCriteria();
 /// @notice Thrown when the provided permit doesn't match the agreement token requirements.
 error InvalidPermit();
+/// @notice Thrown when trying to use an invalid balance for a position in an agreement.
+error InvalidBalance();

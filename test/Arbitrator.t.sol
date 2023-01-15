@@ -14,7 +14,8 @@ import { PositionParams } from "src/interfaces/AgreementTypes.sol";
 import "src/interfaces/ArbitrationErrors.sol";
 import { ResolutionStatus, Resolution } from "src/interfaces/ArbitrationTypes.sol";
 
-import { Arbitrator, DepositConfig } from "src/Arbitrator.sol";
+import { DepositConfig } from "src/utils/interfaces/Deposits.sol";
+import { Arbitrator } from "src/Arbitrator.sol";
 
 contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
 
@@ -33,7 +34,7 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
         DOMAIN_SEPARATOR = permit2.DOMAIN_SEPARATOR();
         appeals = DepositConfig(address(tokenA), 2e17, address(0xD40));
 
-        arbitrator = new Arbitrator(permit2);
+        arbitrator = new Arbitrator(permit2, address(this));
         arbitrable = new MockArbitrable();
 
         arbitrator.setUp(LOCK_PERIOD, true, appeals);

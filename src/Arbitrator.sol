@@ -11,18 +11,9 @@ import "src/interfaces/ArbitrationErrors.sol";
 import {IArbitrable} from "src/interfaces/IArbitrable.sol";
 import {IArbitrator} from "src/interfaces/IArbitrator.sol";
 
+import {DepositConfig} from "src/utils/interfaces/Deposits.sol";
 import {Controlled} from "src/utils/Controlled.sol";
 import {Toggleable} from "src/utils/Toggleable.sol";
-
-/// @dev Data estructure to configure appeal deposits.
-struct DepositConfig {
-    /// @dev Address of the ERC20 token used for deposits.
-    address token;
-    /// @dev Amount of tokens to deposit.
-    uint256 amount;
-    /// @dev Address recipient of the deposit.
-    address recipient;
-}
 
 /// @notice Contract with the power to arbitrate Nation3 arbitrable contracts.
 /// The DAO owns this contract and set a controller to operate it.
@@ -35,7 +26,7 @@ struct DepositConfig {
 /// Anyone can execute resolutions.
 contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @notice Address of the Permit2 contract deployment.
-    Permit2 public permit2;
+    Permit2 public immutable permit2;
 
     /// @notice Appeals deposits configuration.
     DepositConfig deposits;
@@ -53,7 +44,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         return resolution[id];
     }
 
-    constructor(Permit2 permit2_) Controlled(msg.sender, msg.sender) {
+    constructor(Permit2 permit2_, address owner) Controlled(owner, owner) {
         permit2 = permit2_;
     }
 
@@ -126,9 +117,9 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         if (resolution_.status == ResolutionStatus.Endorsed) revert ResolutionIsEndorsed();
 
         DepositConfig memory deposit = deposits;
+        if (permit.permitted.token != deposit.token) revert InvalidPermit();
         bytes32 settlementEncoding = keccak256(abi.encode(settlement));
         if (resolution_.settlement != settlementEncoding) revert SettlementPositionsMustMatch();
-        if (permit.permitted.token != deposit.token) revert InvalidPermit();
         if (!_isParty(msg.sender, settlement)) revert NoPartOfSettlement();
 
         resolution_.status = ResolutionStatus.Appealed;

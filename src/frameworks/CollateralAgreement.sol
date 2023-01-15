@@ -6,6 +6,7 @@ import {ISignatureTransfer} from "permit2/src/interfaces/ISignatureTransfer.sol"
 
 import {Permit2} from "permit2/src/Permit2.sol";
 import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import {ReentrancyGuard} from "solmate/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
 
 import {
@@ -23,6 +24,7 @@ import {IArbitrable, OnlyArbitrator} from "src/interfaces/IArbitrable.sol";
 
 import {AgreementFramework} from "src/frameworks/AgreementFramework.sol";
 import {CriteriaResolver, CriteriaResolution} from "src/libraries/CriteriaResolution.sol";
+import {DepositConfig} from "src/utils/interfaces/Deposits.sol";
 import {Owned} from "src/utils/Owned.sol";
 
 /// @notice Data structure for positions in the agreement.
@@ -59,21 +61,11 @@ struct Agreement {
     mapping(address => Position) position;
 }
 
-/// @dev Data estructure to configure dispute deposits.
-struct DepositConfig {
-    /// @dev Address of the ERC20 token used for deposits.
-    address token;
-    /// @dev Amount of tokens to deposit.
-    uint256 amount;
-    /// @dev Address recipient of the deposit in case of dispute.
-    address recipient;
-}
-
-contract CollateralAgreementFramework is AgreementFramework {
+contract CollateralAgreementFramework is AgreementFramework, ReentrancyGuard {
     using SafeTransferLib for ERC20;
 
     /// @notice Address of the Permit2 contract deployment.
-    Permit2 public permit2;
+    Permit2 public immutable permit2;
 
     /// @notice Dispute deposits configuration.
     DepositConfig public deposits;
@@ -122,7 +114,7 @@ contract CollateralAgreementFramework is AgreementFramework {
     /*                                  SETUP
     /* ====================================================================== */
 
-    constructor(Permit2 permit2_) Owned(msg.sender) {
+    constructor(Permit2 permit2_, address owner) Owned(owner) {
         permit2 = permit2_;
     }
 
@@ -145,8 +137,12 @@ contract CollateralAgreementFramework is AgreementFramework {
     /// @param salt Extra bytes to avoid collisions between agreements with the same terms hash in the framework.
     /// @return id Id of the agreement created, generated from encoding hash of the address of the framework, hash of the terms and a provided salt.
     function createAgreement(AgreementParams calldata params, bytes32 salt) external returns (bytes32 id) {
+        if (params.criteria == 0) revert InvalidCriteria();
+
         id = keccak256(abi.encode(address(this), params.termsHash, salt));
         Agreement storage newAgreement = agreement[id];
+
+        if (newAgreement.criteria != 0) revert AlreadyExistentAgreement();
 
         newAgreement.termsHash = params.termsHash;
         newAgreement.criteria = params.criteria;
@@ -162,16 +158,23 @@ contract CollateralAgreementFramework is AgreementFramework {
         CriteriaResolver calldata resolver,
         ISignatureTransfer.PermitBatchTransferFrom memory permit,
         bytes calldata signature
-    ) external override {
+    ) external override nonReentrant {
         Agreement storage agreement_ = agreement[id];
-        _canJoinAgreement(agreement_, resolver);
+
+        _isOngoing(agreement_);
+        if (_isPartOfAgreement(agreement_, msg.sender)) revert PartyAlreadyJoined();
+
+        // validate criteria
+        if (msg.sender != resolver.account) revert InvalidCriteria();
+        CriteriaResolution.validateCriteria(bytes32(agreement_.criteria), resolver);
+
         DepositConfig memory deposit = deposits;
 
         // validate permit tokens & generate transfer details
         if (permit.permitted[0].token != deposit.token) revert InvalidPermit();
         if (permit.permitted[1].token != agreement_.token) revert InvalidPermit();
         ISignatureTransfer.SignatureTransferDetails[] memory transferDetails =
-            _transferDetails(resolver.balance, deposit.amount);
+            _joinTransferDetails(resolver.balance, deposit.amount);
 
         permit2.permitTransferFrom(permit, transferDetails, msg.sender, signature);
 
@@ -181,10 +184,42 @@ contract CollateralAgreementFramework is AgreementFramework {
     }
 
     /// @inheritdoc IAgreementFramework
+    /// @notice Only allows to increase the collateral of a joined position.
+    function adjustPosition(
+        bytes32 id,
+        PositionParams calldata newPosition,
+        ISignatureTransfer.PermitTransferFrom memory permit,
+        bytes calldata signature
+    ) external override nonReentrant {
+        Agreement storage agreement_ = agreement[id];
+
+        _isOngoing(agreement_);
+        if (!_isPartOfAgreement(agreement_, newPosition.party)) revert NoPartOfAgreement();
+
+        Position memory lastPosition = agreement_.position[newPosition.party];
+        if (lastPosition.status == PositionStatus.Finalized) revert PartyAlreadyFinalized();
+        if (lastPosition.balance > newPosition.balance) revert InvalidBalance();
+        uint256 diff = newPosition.balance - lastPosition.balance;
+
+        // validate permit tokens & generate transfer details
+        if (permit.permitted.token != agreement_.token) revert InvalidPermit();
+        ISignatureTransfer.SignatureTransferDetails memory transferDetails = ISignatureTransfer.SignatureTransferDetails(address(this), diff);
+
+        permit2.permitTransferFrom(permit, transferDetails, msg.sender, signature);
+
+        _updatePosition(agreement_, newPosition, lastPosition.status);
+
+        emit AgreementPositionUpdated(id, newPosition.party, newPosition.balance, lastPosition.status);
+    }
+
+    /// @inheritdoc IAgreementFramework
     function finalizeAgreement(bytes32 id) external {
         Agreement storage agreement_ = agreement[id];
 
-        _canFinalizeAgreement(agreement_);
+        _isOngoing(agreement_);
+        if (!_isPartOfAgreement(agreement_, msg.sender)) revert NoPartOfAgreement();
+        if (agreement_.position[msg.sender].status == PositionStatus.Finalized)
+            revert PartyAlreadyFinalized();
 
         agreement_.position[msg.sender].status = PositionStatus.Finalized;
         agreement_.finalizations += 1;
@@ -198,7 +233,8 @@ contract CollateralAgreementFramework is AgreementFramework {
     function disputeAgreement(bytes32 id) external override {
         Agreement storage agreement_ = agreement[id];
 
-        _canDisputeAgreement(agreement_);
+        _isOngoing(agreement_);
+        if (!_isPartOfAgreement(agreement_, msg.sender)) revert NoPartOfAgreement();
 
         DepositConfig memory deposit = deposits;
         Position storage position = agreement_.position[msg.sender];
@@ -211,12 +247,13 @@ contract CollateralAgreementFramework is AgreementFramework {
 
         SafeTransferLib.safeTransfer(ERC20(deposit.token), deposit.recipient, disputeDeposit);
 
+        emit AgreementPositionUpdated(id, msg.sender, position.balance, PositionStatus.Disputed);
         emit AgreementDisputed(id, msg.sender);
     }
 
     /// @inheritdoc IAgreementFramework
     /// @dev Requires the agreement to be finalized.
-    function withdrawFromAgreement(bytes32 id) external override {
+    function withdrawFromAgreement(bytes32 id) external override nonReentrant {
         Agreement storage agreement_ = agreement[id];
         DepositConfig memory deposit = deposits;
 
@@ -292,38 +329,15 @@ contract CollateralAgreementFramework is AgreementFramework {
         revert NonExistentAgreement();
     }
 
-    /// @dev Check if caller can join an agreement with the criteria resolver provided.
-    /// @param agreement_ Agreement to check.
-    /// @param resolver Criteria resolver to check against criteria.
-    function _canJoinAgreement(Agreement storage agreement_, CriteriaResolver calldata resolver) internal view {
+
+    /// @dev Check if the agreement provided is ongoing (or created).
+    function _isOngoing(Agreement storage agreement_) internal view {
+        if (agreement_.criteria == 0) revert NonExistentAgreement();
         if (agreement_.disputed) revert AgreementIsDisputed();
         if (_isFinalized(agreement_)) revert AgreementIsFinalized();
-        if (_isPartOfAgreement(agreement_, msg.sender)) revert PartyAlreadyJoined();
-        if (msg.sender != resolver.account) revert InvalidCriteria();
-
-        CriteriaResolution.validateCriteria(bytes32(agreement_.criteria), resolver);
     }
 
-    function _canFinalizeAgreement(Agreement storage agreement_) internal view {
-        if (agreement_.disputed) revert AgreementIsDisputed();
-        if (!_isPartOfAgreement(agreement_, msg.sender)) revert NoPartOfAgreement();
-        if (agreement_.position[msg.sender].status == PositionStatus.Finalized) {
-            revert PartyAlreadyFinalized();
-        }
-    }
-
-    /// @dev Check if caller can dispute an agreement.
-    /// @dev Requires the caller to be part of the agreement.
-    /// @dev Can be perform only once per agreement.
-    /// @param agreement_ Agreement to check.
-    function _canDisputeAgreement(Agreement storage agreement_) internal view returns (bool) {
-        if (agreement_.disputed) revert AgreementIsDisputed();
-        if (_isFinalized(agreement_)) revert AgreementIsFinalized();
-        if (!_isPartOfAgreement(agreement_, msg.sender)) revert NoPartOfAgreement();
-        return true;
-    }
-
-    /// @dev Check if an agreement is finalized.
+    /// @dev Retrieve if an agreement is finalized.
     /// @dev An agreement is finalized when all positions are finalized.
     /// @param agreement_ Agreement to check.
     /// @return A boolean signaling if the agreement is finalized or not.
@@ -339,10 +353,10 @@ contract CollateralAgreementFramework is AgreementFramework {
         return ((agreement_.party.length > 0) && (agreement_.position[account].party == account));
     }
 
-    /// @dev Fill Permit2 transferDetails array for deposits & collateral transfer
-    /// @param collateral Amount of collateral token
-    /// @param deposit Amount of deposits token
-    function _transferDetails(uint256 collateral, uint256 deposit)
+    /// @dev Fill Permit2 transferDetails array for deposit & collateral transfer.
+    /// @param collateral Amount of collateral token.
+    /// @param deposit Amount of deposits token.
+    function _joinTransferDetails(uint256 collateral, uint256 deposit)
         internal
         view
         returns (ISignatureTransfer.SignatureTransferDetails[] memory transferDetails)
