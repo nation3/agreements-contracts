@@ -23,7 +23,6 @@ import { CriteriaResolver } from "src/interfaces/CriteriaTypes.sol";
 import { OnlyArbitrator } from "src/interfaces/IArbitrable.sol";
 
 import { InvalidCriteriaProof } from "src/libraries/CriteriaResolution.sol";
-import { CriteriaResolver } from "src/libraries/CriteriaResolution.sol";
 import { DepositConfig } from "src/utils/interfaces/Deposits.sol";
 import { CollateralAgreementFramework } from "src/frameworks/CollateralAgreement.sol";
 
