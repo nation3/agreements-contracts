@@ -1,0 +1,1809 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "resolution",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "settlement",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "ResolutionAppealed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "resolution",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "settlement",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ResolutionEndorsed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "resolution",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "settlement",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ResolutionExecuted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "framework",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "dispute",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "resolution",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "settlement",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ResolutionSubmitted",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "party",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "balance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PositionParams[]",
+          "name": "settlement",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "token",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amount",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct ISignatureTransfer.TokenPermissions",
+              "name": "permitted",
+              "type": "tuple"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ISignatureTransfer.PermitTransferFrom",
+          "name": "permit",
+          "type": "tuple"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "appealResolution",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "settlement",
+          "type": "bytes32"
+        }
+      ],
+      "name": "endorseResolution",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IArbitrable",
+          "name": "framework",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "dispute",
+          "type": "bytes32"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "party",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "balance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PositionParams[]",
+          "name": "settlement",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "executeResolution",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IArbitrable",
+          "name": "framework",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "dispute",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "metadataURI",
+          "type": "string"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "party",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "balance",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PositionParams[]",
+          "name": "settlement",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "submitResolution",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "appealResolution(bytes32,(address,uint256)[],((address,uint256),uint256,uint256),bytes)": "41bcf4dc",
+    "endorseResolution(bytes32,bytes32)": "e44cb37b",
+    "executeResolution(address,bytes32,(address,uint256)[])": "2f7f204e",
+    "submitResolution(address,bytes32,string,(address,uint256)[])": "02fd597d"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"resolution\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"settlement\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"ResolutionAppealed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"resolution\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"settlement\",\"type\":\"bytes32\"}],\"name\":\"ResolutionEndorsed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"resolution\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"settlement\",\"type\":\"bytes32\"}],\"name\":\"ResolutionExecuted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"framework\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"dispute\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"resolution\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"settlement\",\"type\":\"bytes32\"}],\"name\":\"ResolutionSubmitted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"party\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"struct PositionParams[]\",\"name\":\"settlement\",\"type\":\"tuple[]\"},{\"components\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"internalType\":\"struct ISignatureTransfer.TokenPermissions\",\"name\":\"permitted\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"}],\"internalType\":\"struct ISignatureTransfer.PermitTransferFrom\",\"name\":\"permit\",\"type\":\"tuple\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"appealResolution\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"settlement\",\"type\":\"bytes32\"}],\"name\":\"endorseResolution\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IArbitrable\",\"name\":\"framework\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"dispute\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"party\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"struct PositionParams[]\",\"name\":\"settlement\",\"type\":\"tuple[]\"}],\"name\":\"executeResolution\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"contract IArbitrable\",\"name\":\"framework\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"dispute\",\"type\":\"bytes32\"},{\"internalType\":\"string\",\"name\":\"metadataURI\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"party\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"internalType\":\"struct PositionParams[]\",\"name\":\"settlement\",\"type\":\"tuple[]\"}],\"name\":\"submitResolution\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"events\":{\"ResolutionAppealed(bytes32,bytes32,address)\":{\"details\":\"Raised when a resolution is appealed.\",\"params\":{\"account\":\"Address of the account that appealed.\",\"resolution\":\"Id of the resolution appealed.\",\"settlement\":\"Encoding of the settlement.\"}},\"ResolutionEndorsed(bytes32,bytes32)\":{\"details\":\"Raised when an appealed resolution is endorsed.\",\"params\":{\"resolution\":\"Id of the resolution endorsed.\",\"settlement\":\"Encoding of the settlement.\"}},\"ResolutionExecuted(bytes32,bytes32)\":{\"details\":\"Raised when a resolution is executed.\",\"params\":{\"resolution\":\"Id of the resolution executed.\",\"settlement\":\"Encoding of the settlement.\"}},\"ResolutionSubmitted(address,bytes32,bytes32,bytes32)\":{\"details\":\"Raised when a new resolution is submitted.\",\"params\":{\"dispute\":\"Id of the dispute to resolve.\",\"framework\":\"Address of the framework that manages the dispute.\",\"resolution\":\"Id of the resolution.\",\"settlement\":\"Encoding of the settlement.\"}}},\"kind\":\"dev\",\"methods\":{\"appealResolution(bytes32,(address,uint256)[],((address,uint256),uint256,uint256),bytes)\":{\"params\":{\"id\":\"Identifier of the resolution to appeal.\",\"permit\":\"Permit2 permit to allow the required token transfer.\",\"settlement\":\"Array of final positions in the resolution.\",\"signature\":\"Signature of the permit.\"}},\"endorseResolution(bytes32,bytes32)\":{\"params\":{\"id\":\"Identifier of the resolution to endorse.\",\"settlement\":\"Encoding of the settlement to endorse.\"}},\"executeResolution(address,bytes32,(address,uint256)[])\":{\"params\":{\"dispute\":\"Identifier of the agreement in dispute.\",\"framework\":\"address of the framework of the agreement in dispute.\",\"settlement\":\"Array of final positions in the resolution.\"}},\"submitResolution(address,bytes32,string,(address,uint256)[])\":{\"details\":\"Any new resolution for the same dispute overrides the last one.\",\"params\":{\"dispute\":\"Identifier of the agreement in dispute.\",\"framework\":\"address of the framework of the agreement in dispute.\",\"settlement\":\"Array of final positions in the resolution.\"},\"returns\":{\"_0\":\"Identifier of the resolution submitted.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"appealResolution(bytes32,(address,uint256)[],((address,uint256),uint256,uint256),bytes)\":{\"notice\":\"Appeal a submitted resolution.\"},\"endorseResolution(bytes32,bytes32)\":{\"notice\":\"Endorse a submitted resolution, it overrides any appeal.\"},\"executeResolution(address,bytes32,(address,uint256)[])\":{\"notice\":\"Execute a submitted resolution.\"},\"submitResolution(address,bytes32,string,(address,uint256)[])\":{\"notice\":\"Submit a resolution for a dispute.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/interfaces/IArbitrator.sol\":\"IArbitrator\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/\",\":forge-std/=lib/forge-std/src/\",\":murky/=lib/murky/src/\",\":openzeppelin-contracts/=lib/murky/lib/openzeppelin-contracts/\",\":permit2/=lib/permit2/\",\":solmate/=lib/solmate/\"],\"viaIR\":true},\"sources\":{\"lib/permit2/src/interfaces/ISignatureTransfer.sol\":{\"keccak256\":\"0xbab1c35f0a63761be6b50a9a2ce2459b63f09587dd9c6ac46955252a1a04f43c\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://225dca1a3d91c0737fe75c72bfecae391fc2e7b2eb2ebe1a154bfb16a7527972\",\"dweb:/ipfs/QmdGQdUCANKZ6S23TyHDtBnGvr6CtyyqNNcziVTjEHJ5rk\"]},\"src/interfaces/AgreementTypes.sol\":{\"keccak256\":\"0x5c6df190e79046890852190e9f3eefea41850eb8cc72be4209ab3445d628b860\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://e6f2ae444a24849774a0c2c43f6148c71ec0198568356cd99fabcf9ad2b21160\",\"dweb:/ipfs/QmNVhem2KimbhXs6EWTqZ37jqfcTVUPDhAyojJv2KqnP4e\"]},\"src/interfaces/IArbitrable.sol\":{\"keccak256\":\"0x02bf91c7917e02827bf05e9aa12e5970a92f31dcfc90fe53e07e9d05ff4f860a\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://ebd2f23aa9982daa9263f5e44f1a0dd8d0ba4a66e8beb424614bc980c4b71ce3\",\"dweb:/ipfs/QmbtG2EhFWgNAdXHZqv6C2VQbLD38Wp8z5A6kxFRNQbTqT\"]},\"src/interfaces/IArbitrator.sol\":{\"keccak256\":\"0xaf0c56b18d7b06b236d48244045089f1aaf6beae1dfa23059ffd65396dc307fc\",\"license\":\"GPL-3.0-or-later\",\"urls\":[\"bzz-raw://023599d18046944609b49aeea6f20facda25608b1f4a32b8f89535fe4280c485\",\"dweb:/ipfs/QmcpGEAqYW9mQ8SbyhFhE96aUVSidjD3FK88PJ7Xx3P23a\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.17+commit.8df45f5f"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "resolution",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "settlement",
+              "type": "bytes32",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "ResolutionAppealed",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "resolution",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "settlement",
+              "type": "bytes32",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "ResolutionEndorsed",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "resolution",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "settlement",
+              "type": "bytes32",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "ResolutionExecuted",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "framework",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "dispute",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "resolution",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "settlement",
+              "type": "bytes32",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "ResolutionSubmitted",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "struct PositionParams[]",
+              "name": "settlement",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "party",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "balance",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "internalType": "struct ISignatureTransfer.PermitTransferFrom",
+              "name": "permit",
+              "type": "tuple",
+              "components": [
+                {
+                  "internalType": "struct ISignatureTransfer.TokenPermissions",
+                  "name": "permitted",
+                  "type": "tuple",
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "token",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "amount",
+                      "type": "uint256"
+                    }
+                  ]
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "nonce",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                }
+              ]
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "appealResolution"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "id",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "settlement",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "endorseResolution"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IArbitrable",
+              "name": "framework",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "dispute",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "struct PositionParams[]",
+              "name": "settlement",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "party",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "balance",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "executeResolution"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "contract IArbitrable",
+              "name": "framework",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "dispute",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "string",
+              "name": "metadataURI",
+              "type": "string"
+            },
+            {
+              "internalType": "struct PositionParams[]",
+              "name": "settlement",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "party",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "balance",
+                  "type": "uint256"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "submitResolution",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "appealResolution(bytes32,(address,uint256)[],((address,uint256),uint256,uint256),bytes)": {
+            "params": {
+              "id": "Identifier of the resolution to appeal.",
+              "permit": "Permit2 permit to allow the required token transfer.",
+              "settlement": "Array of final positions in the resolution.",
+              "signature": "Signature of the permit."
+            }
+          },
+          "endorseResolution(bytes32,bytes32)": {
+            "params": {
+              "id": "Identifier of the resolution to endorse.",
+              "settlement": "Encoding of the settlement to endorse."
+            }
+          },
+          "executeResolution(address,bytes32,(address,uint256)[])": {
+            "params": {
+              "dispute": "Identifier of the agreement in dispute.",
+              "framework": "address of the framework of the agreement in dispute.",
+              "settlement": "Array of final positions in the resolution."
+            }
+          },
+          "submitResolution(address,bytes32,string,(address,uint256)[])": {
+            "details": "Any new resolution for the same dispute overrides the last one.",
+            "params": {
+              "dispute": "Identifier of the agreement in dispute.",
+              "framework": "address of the framework of the agreement in dispute.",
+              "settlement": "Array of final positions in the resolution."
+            },
+            "returns": {
+              "_0": "Identifier of the resolution submitted."
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "appealResolution(bytes32,(address,uint256)[],((address,uint256),uint256,uint256),bytes)": {
+            "notice": "Appeal a submitted resolution."
+          },
+          "endorseResolution(bytes32,bytes32)": {
+            "notice": "Endorse a submitted resolution, it overrides any appeal."
+          },
+          "executeResolution(address,bytes32,(address,uint256)[])": {
+            "notice": "Execute a submitted resolution."
+          },
+          "submitResolution(address,bytes32,string,(address,uint256)[])": {
+            "notice": "Submit a resolution for a dispute."
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-gas-snapshot/=lib/permit2/lib/forge-gas-snapshot/src/",
+        ":forge-std/=lib/forge-std/src/",
+        ":murky/=lib/murky/src/",
+        ":openzeppelin-contracts/=lib/murky/lib/openzeppelin-contracts/",
+        ":permit2/=lib/permit2/",
+        ":solmate/=lib/solmate/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/interfaces/IArbitrator.sol": "IArbitrator"
+      },
+      "libraries": {},
+      "viaIR": true
+    },
+    "sources": {
+      "lib/permit2/src/interfaces/ISignatureTransfer.sol": {
+        "keccak256": "0xbab1c35f0a63761be6b50a9a2ce2459b63f09587dd9c6ac46955252a1a04f43c",
+        "urls": [
+          "bzz-raw://225dca1a3d91c0737fe75c72bfecae391fc2e7b2eb2ebe1a154bfb16a7527972",
+          "dweb:/ipfs/QmdGQdUCANKZ6S23TyHDtBnGvr6CtyyqNNcziVTjEHJ5rk"
+        ],
+        "license": "MIT"
+      },
+      "src/interfaces/AgreementTypes.sol": {
+        "keccak256": "0x5c6df190e79046890852190e9f3eefea41850eb8cc72be4209ab3445d628b860",
+        "urls": [
+          "bzz-raw://e6f2ae444a24849774a0c2c43f6148c71ec0198568356cd99fabcf9ad2b21160",
+          "dweb:/ipfs/QmNVhem2KimbhXs6EWTqZ37jqfcTVUPDhAyojJv2KqnP4e"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/IArbitrable.sol": {
+        "keccak256": "0x02bf91c7917e02827bf05e9aa12e5970a92f31dcfc90fe53e07e9d05ff4f860a",
+        "urls": [
+          "bzz-raw://ebd2f23aa9982daa9263f5e44f1a0dd8d0ba4a66e8beb424614bc980c4b71ce3",
+          "dweb:/ipfs/QmbtG2EhFWgNAdXHZqv6C2VQbLD38Wp8z5A6kxFRNQbTqT"
+        ],
+        "license": "GPL-3.0-or-later"
+      },
+      "src/interfaces/IArbitrator.sol": {
+        "keccak256": "0xaf0c56b18d7b06b236d48244045089f1aaf6beae1dfa23059ffd65396dc307fc",
+        "urls": [
+          "bzz-raw://023599d18046944609b49aeea6f20facda25608b1f4a32b8f89535fe4280c485",
+          "dweb:/ipfs/QmcpGEAqYW9mQ8SbyhFhE96aUVSidjD3FK88PJ7Xx3P23a"
+        ],
+        "license": "GPL-3.0-or-later"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/interfaces/IArbitrator.sol",
+    "id": 32660,
+    "exportedSymbols": {
+      "IArbitrable": [
+        32563
+      ],
+      "IArbitrator": [
+        32659
+      ],
+      "ISignatureTransfer": [
+        28545
+      ],
+      "PositionParams": [
+        32324
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "45:3250:46",
+    "nodes": [
+      {
+        "id": 32565,
+        "nodeType": "PragmaDirective",
+        "src": "45:24:46",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".17"
+        ]
+      },
+      {
+        "id": 32567,
+        "nodeType": "ImportDirective",
+        "src": "71:81:46",
+        "nodes": [],
+        "absolutePath": "lib/permit2/src/interfaces/ISignatureTransfer.sol",
+        "file": "permit2/src/interfaces/ISignatureTransfer.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 32660,
+        "sourceUnit": 28546,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 32566,
+              "name": "ISignatureTransfer",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 28545,
+              "src": "79:18:46",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 32569,
+        "nodeType": "ImportDirective",
+        "src": "154:65:46",
+        "nodes": [],
+        "absolutePath": "src/interfaces/AgreementTypes.sol",
+        "file": "src/interfaces/AgreementTypes.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 32660,
+        "sourceUnit": 32369,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 32568,
+              "name": "PositionParams",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 32324,
+              "src": "162:14:46",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 32571,
+        "nodeType": "ImportDirective",
+        "src": "220:59:46",
+        "nodes": [],
+        "absolutePath": "src/interfaces/IArbitrable.sol",
+        "file": "src/interfaces/IArbitrable.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 32660,
+        "sourceUnit": 32564,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 32570,
+              "name": "IArbitrable",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 32563,
+              "src": "228:11:46",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 32659,
+        "nodeType": "ContractDefinition",
+        "src": "281:3013:46",
+        "nodes": [
+          {
+            "id": 32582,
+            "nodeType": "EventDefinition",
+            "src": "596:126:46",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 32572,
+              "nodeType": "StructuredDocumentation",
+              "src": "309:282:46",
+              "text": "@dev Raised when a new resolution is submitted.\n @param framework Address of the framework that manages the dispute.\n @param dispute Id of the dispute to resolve.\n @param resolution Id of the resolution.\n @param settlement Encoding of the settlement."
+            },
+            "eventSelector": "96eab3103fbd8c0266eca3e7a57929bc3bd66ef5223e2cb45f589f884ffcb9ae",
+            "name": "ResolutionSubmitted",
+            "nameLocation": "602:19:46",
+            "parameters": {
+              "id": 32581,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32574,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "framework",
+                  "nameLocation": "638:9:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32582,
+                  "src": "622:25:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32573,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "622:7:46",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32576,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "dispute",
+                  "nameLocation": "665:7:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32582,
+                  "src": "649:23:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32575,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "649:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32578,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "resolution",
+                  "nameLocation": "690:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32582,
+                  "src": "674:26:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32577,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "674:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32580,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "710:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32582,
+                  "src": "702:18:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32579,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "702:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "621:100:46"
+            }
+          },
+          {
+            "id": 32591,
+            "nodeType": "EventDefinition",
+            "src": "951:90:46",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 32583,
+              "nodeType": "StructuredDocumentation",
+              "src": "728:218:46",
+              "text": "@dev Raised when a resolution is appealed.\n @param resolution Id of the resolution appealed.\n @param settlement Encoding of the settlement.\n @param account Address of the account that appealed."
+            },
+            "eventSelector": "2a41d71ad20bb81193ade4a1c1c4796777ba30f92f48c41fce7eeb361e109b0e",
+            "name": "ResolutionAppealed",
+            "nameLocation": "957:18:46",
+            "parameters": {
+              "id": 32590,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32585,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "resolution",
+                  "nameLocation": "992:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32591,
+                  "src": "976:26:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32584,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "976:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32587,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "1012:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32591,
+                  "src": "1004:18:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32586,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1004:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32589,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "account",
+                  "nameLocation": "1032:7:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32591,
+                  "src": "1024:15:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32588,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1024:7:46",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "975:65:46"
+            }
+          },
+          {
+            "id": 32598,
+            "nodeType": "EventDefinition",
+            "src": "1219:73:46",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 32592,
+              "nodeType": "StructuredDocumentation",
+              "src": "1047:167:46",
+              "text": "@dev Raised when an appealed resolution is endorsed.\n @param resolution Id of the resolution endorsed.\n @param settlement Encoding of the settlement."
+            },
+            "eventSelector": "b6dc686a67a9620536a83f729428ef64a3e6529407d6b5e0df3426fe6b01a260",
+            "name": "ResolutionEndorsed",
+            "nameLocation": "1225:18:46",
+            "parameters": {
+              "id": 32597,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32594,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "resolution",
+                  "nameLocation": "1260:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32598,
+                  "src": "1244:26:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32593,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1244:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32596,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "1280:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32598,
+                  "src": "1272:18:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32595,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1272:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1243:48:46"
+            }
+          },
+          {
+            "id": 32605,
+            "nodeType": "EventDefinition",
+            "src": "1460:73:46",
+            "nodes": [],
+            "anonymous": false,
+            "documentation": {
+              "id": 32599,
+              "nodeType": "StructuredDocumentation",
+              "src": "1298:157:46",
+              "text": "@dev Raised when a resolution is executed.\n @param resolution Id of the resolution executed.\n @param settlement Encoding of the settlement."
+            },
+            "eventSelector": "eb0ed49da371fcf5b9313864d8c92a2130bd637affe927c057a55a06905d0cd4",
+            "name": "ResolutionExecuted",
+            "nameLocation": "1466:18:46",
+            "parameters": {
+              "id": 32604,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32601,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "resolution",
+                  "nameLocation": "1501:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32605,
+                  "src": "1485:26:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32600,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1485:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32603,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "1521:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32605,
+                  "src": "1513:18:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32602,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1513:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1484:48:46"
+            }
+          },
+          {
+            "id": 32622,
+            "nodeType": "FunctionDefinition",
+            "src": "1935:198:46",
+            "nodes": [],
+            "documentation": {
+              "id": 32606,
+              "nodeType": "StructuredDocumentation",
+              "src": "1539:391:46",
+              "text": "@notice Submit a resolution for a dispute.\n @dev Any new resolution for the same dispute overrides the last one.\n @param framework address of the framework of the agreement in dispute.\n @param dispute Identifier of the agreement in dispute.\n @param settlement Array of final positions in the resolution.\n @return Identifier of the resolution submitted."
+            },
+            "functionSelector": "02fd597d",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "submitResolution",
+            "nameLocation": "1944:16:46",
+            "parameters": {
+              "id": 32618,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32609,
+                  "mutability": "mutable",
+                  "name": "framework",
+                  "nameLocation": "1982:9:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32622,
+                  "src": "1970:21:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IArbitrable_$32563",
+                    "typeString": "contract IArbitrable"
+                  },
+                  "typeName": {
+                    "id": 32608,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 32607,
+                      "name": "IArbitrable",
+                      "nameLocations": [
+                        "1970:11:46"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 32563,
+                      "src": "1970:11:46"
+                    },
+                    "referencedDeclaration": 32563,
+                    "src": "1970:11:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IArbitrable_$32563",
+                      "typeString": "contract IArbitrable"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32611,
+                  "mutability": "mutable",
+                  "name": "dispute",
+                  "nameLocation": "2009:7:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32622,
+                  "src": "2001:15:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32610,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2001:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32613,
+                  "mutability": "mutable",
+                  "name": "metadataURI",
+                  "nameLocation": "2042:11:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32622,
+                  "src": "2026:27:46",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_calldata_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 32612,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2026:6:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32617,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "2089:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32622,
+                  "src": "2063:36:46",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_PositionParams_$32324_calldata_ptr_$dyn_calldata_ptr",
+                    "typeString": "struct PositionParams[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 32615,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 32614,
+                        "name": "PositionParams",
+                        "nameLocations": [
+                          "2063:14:46"
+                        ],
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 32324,
+                        "src": "2063:14:46"
+                      },
+                      "referencedDeclaration": 32324,
+                      "src": "2063:14:46",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_PositionParams_$32324_storage_ptr",
+                        "typeString": "struct PositionParams"
+                      }
+                    },
+                    "id": 32616,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2063:16:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_PositionParams_$32324_storage_$dyn_storage_ptr",
+                      "typeString": "struct PositionParams[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1960:145:46"
+            },
+            "returnParameters": {
+              "id": 32621,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32620,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32622,
+                  "src": "2124:7:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32619,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2124:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2123:9:46"
+            },
+            "scope": 32659,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 32635,
+            "nodeType": "FunctionDefinition",
+            "src": "2399:114:46",
+            "nodes": [],
+            "documentation": {
+              "id": 32623,
+              "nodeType": "StructuredDocumentation",
+              "src": "2139:255:46",
+              "text": "@notice Execute a submitted resolution.\n @param framework address of the framework of the agreement in dispute.\n @param dispute Identifier of the agreement in dispute.\n @param settlement Array of final positions in the resolution."
+            },
+            "functionSelector": "2f7f204e",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "executeResolution",
+            "nameLocation": "2408:17:46",
+            "parameters": {
+              "id": 32633,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32626,
+                  "mutability": "mutable",
+                  "name": "framework",
+                  "nameLocation": "2438:9:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32635,
+                  "src": "2426:21:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_IArbitrable_$32563",
+                    "typeString": "contract IArbitrable"
+                  },
+                  "typeName": {
+                    "id": 32625,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 32624,
+                      "name": "IArbitrable",
+                      "nameLocations": [
+                        "2426:11:46"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 32563,
+                      "src": "2426:11:46"
+                    },
+                    "referencedDeclaration": 32563,
+                    "src": "2426:11:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_IArbitrable_$32563",
+                      "typeString": "contract IArbitrable"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32628,
+                  "mutability": "mutable",
+                  "name": "dispute",
+                  "nameLocation": "2457:7:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32635,
+                  "src": "2449:15:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32627,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2449:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32632,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "2492:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32635,
+                  "src": "2466:36:46",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_PositionParams_$32324_calldata_ptr_$dyn_calldata_ptr",
+                    "typeString": "struct PositionParams[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 32630,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 32629,
+                        "name": "PositionParams",
+                        "nameLocations": [
+                          "2466:14:46"
+                        ],
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 32324,
+                        "src": "2466:14:46"
+                      },
+                      "referencedDeclaration": 32324,
+                      "src": "2466:14:46",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_PositionParams_$32324_storage_ptr",
+                        "typeString": "struct PositionParams"
+                      }
+                    },
+                    "id": 32631,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2466:16:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_PositionParams_$32324_storage_$dyn_storage_ptr",
+                      "typeString": "struct PositionParams[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2425:78:46"
+            },
+            "returnParameters": {
+              "id": 32634,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2512:0:46"
+            },
+            "scope": 32659,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 32650,
+            "nodeType": "FunctionDefinition",
+            "src": "2819:202:46",
+            "nodes": [],
+            "documentation": {
+              "id": 32636,
+              "nodeType": "StructuredDocumentation",
+              "src": "2519:295:46",
+              "text": "@notice Appeal a submitted resolution.\n @param id Identifier of the resolution to appeal.\n @param settlement Array of final positions in the resolution.\n @param permit Permit2 permit to allow the required token transfer.\n @param signature Signature of the permit."
+            },
+            "functionSelector": "41bcf4dc",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "appealResolution",
+            "nameLocation": "2828:16:46",
+            "parameters": {
+              "id": 32648,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32638,
+                  "mutability": "mutable",
+                  "name": "id",
+                  "nameLocation": "2862:2:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32650,
+                  "src": "2854:10:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32637,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2854:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32642,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "2900:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32650,
+                  "src": "2874:36:46",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_PositionParams_$32324_calldata_ptr_$dyn_calldata_ptr",
+                    "typeString": "struct PositionParams[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 32640,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 32639,
+                        "name": "PositionParams",
+                        "nameLocations": [
+                          "2874:14:46"
+                        ],
+                        "nodeType": "IdentifierPath",
+                        "referencedDeclaration": 32324,
+                        "src": "2874:14:46"
+                      },
+                      "referencedDeclaration": 32324,
+                      "src": "2874:14:46",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_PositionParams_$32324_storage_ptr",
+                        "typeString": "struct PositionParams"
+                      }
+                    },
+                    "id": 32641,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2874:16:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_PositionParams_$32324_storage_$dyn_storage_ptr",
+                      "typeString": "struct PositionParams[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32645,
+                  "mutability": "mutable",
+                  "name": "permit",
+                  "nameLocation": "2965:6:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32650,
+                  "src": "2920:51:46",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_PermitTransferFrom_$28446_memory_ptr",
+                    "typeString": "struct ISignatureTransfer.PermitTransferFrom"
+                  },
+                  "typeName": {
+                    "id": 32644,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 32643,
+                      "name": "ISignatureTransfer.PermitTransferFrom",
+                      "nameLocations": [
+                        "2920:18:46",
+                        "2939:18:46"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 28446,
+                      "src": "2920:37:46"
+                    },
+                    "referencedDeclaration": 28446,
+                    "src": "2920:37:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_PermitTransferFrom_$28446_storage_ptr",
+                      "typeString": "struct ISignatureTransfer.PermitTransferFrom"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32647,
+                  "mutability": "mutable",
+                  "name": "signature",
+                  "nameLocation": "2996:9:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32650,
+                  "src": "2981:24:46",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_calldata_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 32646,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2981:5:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2844:167:46"
+            },
+            "returnParameters": {
+              "id": 32649,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3020:0:46"
+            },
+            "scope": 32659,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 32658,
+            "nodeType": "FunctionDefinition",
+            "src": "3224:68:46",
+            "nodes": [],
+            "documentation": {
+              "id": 32651,
+              "nodeType": "StructuredDocumentation",
+              "src": "3027:192:46",
+              "text": "@notice Endorse a submitted resolution, it overrides any appeal.\n @param id Identifier of the resolution to endorse.\n @param settlement Encoding of the settlement to endorse."
+            },
+            "functionSelector": "e44cb37b",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "endorseResolution",
+            "nameLocation": "3233:17:46",
+            "parameters": {
+              "id": 32656,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32653,
+                  "mutability": "mutable",
+                  "name": "id",
+                  "nameLocation": "3259:2:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32658,
+                  "src": "3251:10:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32652,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3251:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32655,
+                  "mutability": "mutable",
+                  "name": "settlement",
+                  "nameLocation": "3271:10:46",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32658,
+                  "src": "3263:18:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 32654,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3263:7:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3250:32:46"
+            },
+            "returnParameters": {
+              "id": 32657,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3291:0:46"
+            },
+            "scope": 32659,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IArbitrator",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          32659
+        ],
+        "name": "IArbitrator",
+        "nameLocation": "291:11:46",
+        "scope": 32660,
+        "usedErrors": []
+      }
+    ],
+    "license": "GPL-3.0-or-later"
+  },
+  "id": 46
+}

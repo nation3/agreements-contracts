@@ -1,0 +1,22 @@
+{
+  "name": "@nation3/jurisdiction",
+  "version": "0.1.0",
+  "description": "Nation3 Jurisdiction Repository",
+  "repository": "https://github.com/nation3/jurisdiction",
+  "author": "Nation3: Solar Guild",
+  "license": "GPL-3.0+",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/@graphprotocol/graph-ts",
+      "**/@graphprotocol/graph-ts/**",
+      "**/@graphprotocol/graph-cli",
+      "**/@graphprotocol/graph-cli/**",
+      "**/matchstick-as",
+      "**/matchstick-as/**"
+    ]
+  }
+}

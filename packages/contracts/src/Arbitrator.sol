@@ -40,7 +40,9 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @notice Retrieve resolution details.
     /// @param id Id of the resolution to return data from.
     /// @return details Data struct of the resolution.
-    function resolutionDetails(bytes32 id) external view returns (Resolution memory details) {
+    function resolutionDetails(
+        bytes32 id
+    ) external view returns (Resolution memory details) {
         return resolution[id];
     }
 
@@ -52,7 +54,11 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @param lockPeriod_ Duration of the resolution lock period.
     /// @param enabled_ Status of the arbitrator.
     /// @param deposits_ Configuration of the appeal's deposits in DepositConfig format.
-    function setUp(uint256 lockPeriod_, bool enabled_, DepositConfig calldata deposits_) external onlyOwner {
+    function setUp(
+        uint256 lockPeriod_,
+        bool enabled_,
+        DepositConfig calldata deposits_
+    ) external onlyOwner {
         lockPeriod = lockPeriod_;
         enabled = enabled_;
         deposits = deposits_;
@@ -69,7 +75,8 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         id = keccak256(abi.encodePacked(framework, dispute));
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Executed) revert ResolutionIsExecuted();
+        if (resolution_.status == ResolutionStatus.Executed)
+            revert ResolutionIsExecuted();
 
         bytes32 settlementEncoding = keccak256(abi.encode(settlement));
         resolution_.status = ResolutionStatus.Submitted;
@@ -77,24 +84,31 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         resolution_.metadataURI = metadataURI;
         resolution_.unlockTime = block.timestamp + lockPeriod;
 
-        emit ResolutionSubmitted(address(framework), id, settlementEncoding);
+        emit ResolutionSubmitted(address(framework), dispute, id, settlementEncoding);
     }
 
     /// @inheritdoc IArbitrator
-    function executeResolution(IArbitrable framework, bytes32 dispute, PositionParams[] calldata settlement)
-        public
-        isEnabled
-    {
+    function executeResolution(
+        IArbitrable framework,
+        bytes32 dispute,
+        PositionParams[] calldata settlement
+    ) public isEnabled {
         bytes32 id = keccak256(abi.encodePacked(framework, dispute));
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Appealed) revert ResolutionIsAppealed();
-        if (resolution_.status == ResolutionStatus.Executed) revert ResolutionIsExecuted();
-        if (resolution_.status != ResolutionStatus.Endorsed && block.timestamp < resolution_.unlockTime) {
+        if (resolution_.status == ResolutionStatus.Appealed)
+            revert ResolutionIsAppealed();
+        if (resolution_.status == ResolutionStatus.Executed)
+            revert ResolutionIsExecuted();
+        if (
+            resolution_.status != ResolutionStatus.Endorsed &&
+            block.timestamp < resolution_.unlockTime
+        ) {
             revert ResolutionIsLocked();
         }
         bytes32 settlementEncoding = keccak256(abi.encode(settlement));
-        if (resolution_.settlement != settlementEncoding) revert SettlementPositionsMustMatch();
+        if (resolution_.settlement != settlementEncoding)
+            revert SettlementPositionsMustMatch();
 
         resolution_.status = ResolutionStatus.Executed;
 
@@ -112,32 +126,48 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     ) external {
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Idle) revert NonExistentResolution();
-        if (resolution_.status == ResolutionStatus.Executed) revert ResolutionIsExecuted();
-        if (resolution_.status == ResolutionStatus.Endorsed) revert ResolutionIsEndorsed();
+        if (resolution_.status == ResolutionStatus.Idle)
+            revert NonExistentResolution();
+        if (resolution_.status == ResolutionStatus.Executed)
+            revert ResolutionIsExecuted();
+        if (resolution_.status == ResolutionStatus.Endorsed)
+            revert ResolutionIsEndorsed();
 
         DepositConfig memory deposit = deposits;
         if (permit.permitted.token != deposit.token) revert InvalidPermit();
         bytes32 settlementEncoding = keccak256(abi.encode(settlement));
-        if (resolution_.settlement != settlementEncoding) revert SettlementPositionsMustMatch();
+        if (resolution_.settlement != settlementEncoding)
+            revert SettlementPositionsMustMatch();
         if (!_isParty(msg.sender, settlement)) revert NoPartOfSettlement();
 
         resolution_.status = ResolutionStatus.Appealed;
 
-        ISignatureTransfer.SignatureTransferDetails memory transferDetails =
-            ISignatureTransfer.SignatureTransferDetails(deposit.recipient, deposit.amount);
-        permit2.permitTransferFrom(permit, transferDetails, msg.sender, signature);
+        ISignatureTransfer.SignatureTransferDetails
+            memory transferDetails = ISignatureTransfer
+                .SignatureTransferDetails(deposit.recipient, deposit.amount);
+        permit2.permitTransferFrom(
+            permit,
+            transferDetails,
+            msg.sender,
+            signature
+        );
 
         emit ResolutionAppealed(id, settlementEncoding, msg.sender);
     }
 
     /// @inheritdoc IArbitrator
-    function endorseResolution(bytes32 id, bytes32 settlement) external onlyOwner {
+    function endorseResolution(
+        bytes32 id,
+        bytes32 settlement
+    ) external onlyOwner {
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Idle) revert NonExistentResolution();
-        if (resolution_.status == ResolutionStatus.Executed) revert ResolutionIsExecuted();
-        if (resolution_.settlement != settlement) revert SettlementPositionsMustMatch();
+        if (resolution_.status == ResolutionStatus.Idle)
+            revert NonExistentResolution();
+        if (resolution_.status == ResolutionStatus.Executed)
+            revert ResolutionIsExecuted();
+        if (resolution_.settlement != settlement)
+            revert SettlementPositionsMustMatch();
 
         resolution_.status = ResolutionStatus.Endorsed;
 
@@ -151,7 +181,10 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @dev Check if an account is part of a settlement.
     /// @param account Address to check.
     /// @param settlement Array of positions.
-    function _isParty(address account, PositionParams[] calldata settlement) internal pure returns (bool found) {
+    function _isParty(
+        address account,
+        PositionParams[] calldata settlement
+    ) internal pure returns (bool found) {
         for (uint256 i = 0; !found && i < settlement.length; i++) {
             if (settlement[i].party == account) found = true;
         }

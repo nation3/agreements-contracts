@@ -10,24 +10,25 @@ interface IArbitrator {
     /// @dev Raised when a new resolution is submitted.
     /// @param framework Address of the framework that manages the dispute.
     /// @param dispute Id of the dispute to resolve.
+    /// @param resolution Id of the resolution.
     /// @param settlement Encoding of the settlement.
-    event ResolutionSubmitted(address indexed framework, bytes32 indexed dispute, bytes32 indexed settlement);
+    event ResolutionSubmitted(address indexed framework, bytes32 indexed dispute, bytes32 indexed resolution, bytes32 settlement);
 
     /// @dev Raised when a resolution is appealed.
     /// @param resolution Id of the resolution appealed.
     /// @param settlement Encoding of the settlement.
     /// @param account Address of the account that appealed.
-    event ResolutionAppealed(bytes32 indexed resolution, bytes32 indexed settlement, address account);
+    event ResolutionAppealed(bytes32 indexed resolution, bytes32 settlement, address account);
 
     /// @dev Raised when an appealed resolution is endorsed.
     /// @param resolution Id of the resolution endorsed.
     /// @param settlement Encoding of the settlement.
-    event ResolutionEndorsed(bytes32 indexed resolution, bytes32 indexed settlement);
+    event ResolutionEndorsed(bytes32 indexed resolution, bytes32 settlement);
 
     /// @dev Raised when a resolution is executed.
     /// @param resolution Id of the resolution executed.
     /// @param settlement Encoding of the settlement.
-    event ResolutionExecuted(bytes32 indexed resolution, bytes32 indexed settlement);
+    event ResolutionExecuted(bytes32 indexed resolution, bytes32 settlement);
 
     /// @notice Submit a resolution for a dispute.
     /// @dev Any new resolution for the same dispute overrides the last one.
