@@ -1,0 +1,40 @@
+name: Smart Contracts CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: true
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/contracts
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - name: Run Forge build
+      - run: |
+          forge --version
+          forge build --via-ir
+        id: build
+      - name: Run Forge tests
+        run: |
+          forge test
+        id: test
+      - name: Run Forge coverage
+        run: |
+          forge coverage --report lcov
+      - uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: false
