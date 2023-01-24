@@ -1,0 +1,63 @@
+specVersion: 0.0.4
+description: TBD
+repository: https://github.com/nation3/court
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: CollateralAgreementFramework
+    network: goerli
+    source:
+      address: "0xF0054F4Dab2a41a9459a5C76f4aD64D2cA7eF227"
+      abi: AgreementFramework
+      startBlock: 7843026
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Agreement
+        - AgreementPosition
+        - Dispute
+      abis:
+        - name: AgreementFramework
+          file: ./abis/IAgreementFramework.json
+      eventHandlers:
+        - event: AgreementCreated(indexed bytes32,bytes32,uint256,string,address)
+          handler: handleAgreementCreated
+        - event: AgreementJoined(indexed bytes32,indexed address,uint256)
+          handler: handleAgreementJoined
+        - event: AgreementPositionUpdated(indexed bytes32,indexed address,uint256,uint8)
+          handler: handleAgreementPositionUpdated
+        - event: AgreementFinalized(indexed bytes32)
+          handler: handleAgreementFinalized
+        - event: AgreementDisputed(indexed bytes32,indexed address)
+          handler: handleAgreementDisputed
+      file: ./src/agreement-framework.ts
+  - kind: ethereum
+    name: Arbitrator
+    network: goerli
+    source:
+      address: "0x1dBEFF62DFa113f7254AaB5772F1AC6E66F94e7e"
+      abi: Arbitrator
+      startBlock: 7843026
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Dispute
+        - Resolution
+      abis:
+        - name: Arbitrator
+          file: ./abis/IArbitrator.json
+      eventHandlers:
+        - event: ResolutionSubmitted(indexed address,indexed bytes32,indexed bytes32,bytes32)
+          handler: handleResolutionSubmitted
+        - event: ResolutionAppealed(indexed bytes32,bytes32,address)
+          handler: handleResolutionAppealed
+        - event: ResolutionEndorsed(indexed bytes32,bytes32)
+          handler: handleResolutionEndorsed
+        - event: ResolutionExecuted(indexed bytes32,bytes32)
+          handler: handleResolutionExecuted
+      file: ./src/arbitrator.ts

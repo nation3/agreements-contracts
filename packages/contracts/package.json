@@ -1,0 +1,19 @@
+{
+  "name": "@nation3/jurisdiction-contracts",
+  "version": "0.1.0",
+  "description": "Nation3 Jurisdiction Contracts",
+  "repository": "https://github.com/nation3/jurisdiction",
+  "author": "Nation3: Solar Guild",
+  "license": "GPL-3.0+",
+  "devDependencies": {
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.24",
+    "solhint": "^3.3.7"
+  },
+  "scripts": {
+    "lint:check": "yarn lint:check:format && yarn lint:check:solhint",
+    "lint:check:format": "prettier --check **/*.sol",
+    "lint:check:solhint": "solhint src/**/*.sol",
+    "lint:fix": "prettier --write **/*.sol"
+  }
+}

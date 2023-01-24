@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { Test } from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 import {ISignatureTransfer} from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import { TestConstants } from "test/utils/Constants.sol";
-import { MockArbitrable } from "test/utils/mocks/MockArbitrable.sol";
-import { PermitSignature } from "test/utils/PermitSignature.sol";
-import { TokenProvider } from "test/utils/TokenProvider.sol";
+import {TestConstants} from "test/utils/Constants.sol";
+import {MockArbitrable} from "test/utils/mocks/MockArbitrable.sol";
+import {PermitSignature} from "test/utils/PermitSignature.sol";
+import {TokenProvider} from "test/utils/TokenProvider.sol";
 
-import { PositionParams } from "src/interfaces/AgreementTypes.sol";
+import {PositionParams} from "src/interfaces/AgreementTypes.sol";
 import "src/interfaces/ArbitrationErrors.sol";
-import { ResolutionStatus, Resolution } from "src/interfaces/ArbitrationTypes.sol";
+import {ResolutionStatus, Resolution} from "src/interfaces/ArbitrationTypes.sol";
 
-import { DepositConfig } from "src/utils/interfaces/Deposits.sol";
-import { Arbitrator } from "src/Arbitrator.sol";
+import {DepositConfig} from "src/utils/interfaces/Deposits.sol";
+import {Arbitrator} from "src/Arbitrator.sol";
 
 contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
-
     Arbitrator arbitrator;
     MockArbitrable arbitrable;
 
@@ -50,7 +49,9 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
         bytes32 resolutionId = submitResolution();
         uint256 submitTime = block.timestamp;
 
-        Resolution memory resolution = arbitrator.resolutionDetails(resolutionId);
+        Resolution memory resolution = arbitrator.resolutionDetails(
+            resolutionId
+        );
 
         assertEq(resolution.status, ResolutionStatus.Submitted);
         assertEq(resolution.metadataURI, METADATA_URI);
@@ -60,7 +61,9 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
     function testResolutionOverride() public {
         bytes32 resolutionId = submitResolution();
 
-        Resolution memory originalResolution = arbitrator.resolutionDetails(resolutionId);
+        Resolution memory originalResolution = arbitrator.resolutionDetails(
+            resolutionId
+        );
 
         // Generate new settlement
         PositionParams[] memory newSettlement = settlement();
@@ -70,12 +73,22 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
         vm.warp(warpTime);
 
         // Submit new resolution for the same dispute
-        arbitrator.submitResolution(arbitrable, dispute, METADATA_URI, newSettlement);
+        arbitrator.submitResolution(
+            arbitrable,
+            dispute,
+            METADATA_URI,
+            newSettlement
+        );
 
-        Resolution memory newResolution = arbitrator.resolutionDetails(resolutionId);
+        Resolution memory newResolution = arbitrator.resolutionDetails(
+            resolutionId
+        );
 
         assertTrue(originalResolution.settlement != newResolution.settlement);
-        assertEq(newResolution.settlement, keccak256(abi.encode(newSettlement)));
+        assertEq(
+            newResolution.settlement,
+            keccak256(abi.encode(newSettlement))
+        );
 
         assertEq(newResolution.unlockTime, warpTime + LOCK_PERIOD);
     }
@@ -84,7 +97,12 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
         executedResolution();
 
         vm.expectRevert(ResolutionIsExecuted.selector);
-        arbitrator.submitResolution(arbitrable, dispute, "ipfs://", settlement());
+        arbitrator.submitResolution(
+            arbitrable,
+            dispute,
+            "ipfs://",
+            settlement()
+        );
     }
 
     function testExecuteResolution() public {
@@ -151,8 +169,18 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
     function testOnlyPartiesCanAppeal() public {
         bytes32 id = submitResolution();
 
-        ISignatureTransfer.PermitTransferFrom memory permit = defaultERC20PermitTransfer(address(tokenA), appeals.amount, 0);
-        bytes memory signature = getPermitTransferSignature(permit, address(arbitrator), 0xB0B, DOMAIN_SEPARATOR);
+        ISignatureTransfer.PermitTransferFrom
+            memory permit = defaultERC20PermitTransfer(
+                address(tokenA),
+                appeals.amount,
+                0
+            );
+        bytes memory signature = getPermitTransferSignature(
+            permit,
+            address(arbitrator),
+            0xB0B,
+            DOMAIN_SEPARATOR
+        );
 
         // Pretend to be random user that is not part of settlement
         vm.prank(address(0xDEAD));
@@ -170,19 +198,38 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
 
     /* ---------------------------------------------------------------------- */
 
-    function settlement() internal view returns (PositionParams[] memory settlement_) {
+    function settlement()
+        internal
+        view
+        returns (PositionParams[] memory settlement_)
+    {
         settlement_ = new PositionParams[](2);
         settlement_[0] = PositionParams(bob, 3 * 1e18);
         settlement_[1] = PositionParams(alice, 0);
     }
 
     function submitResolution() internal returns (bytes32 id) {
-        id = arbitrator.submitResolution(arbitrable, dispute, METADATA_URI, settlement());
+        id = arbitrator.submitResolution(
+            arbitrable,
+            dispute,
+            METADATA_URI,
+            settlement()
+        );
     }
 
     function appealResolution(bytes32 id) internal {
-        ISignatureTransfer.PermitTransferFrom memory permit = defaultERC20PermitTransfer(address(tokenA), appeals.amount, 0);
-        bytes memory signature = getPermitTransferSignature(permit, address(arbitrator), 0xB0B, DOMAIN_SEPARATOR);
+        ISignatureTransfer.PermitTransferFrom
+            memory permit = defaultERC20PermitTransfer(
+                address(tokenA),
+                appeals.amount,
+                0
+            );
+        bytes memory signature = getPermitTransferSignature(
+            permit,
+            address(arbitrator),
+            0xB0B,
+            DOMAIN_SEPARATOR
+        );
 
         vm.prank(bob);
         arbitrator.appealResolution(id, settlement(), permit, signature);
@@ -214,6 +261,4 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
             fail();
         }
     }
-
-
 }

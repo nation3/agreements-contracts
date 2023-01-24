@@ -4,3 +4,4 @@ out = 'out'
 libs = ['lib']
 solc = "0.8.17"
 fs_permissions = [{ access = "read-write", path = "./deployments/"}]
+gas_reports = ["CollateralAgreementFramework", "Arbitrator"]
