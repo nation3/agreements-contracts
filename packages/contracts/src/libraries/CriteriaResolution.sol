@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import {CriteriaResolver} from "src/interfaces/CriteriaTypes.sol";
+import { CriteriaResolver } from "src/interfaces/CriteriaTypes.sol";
 
 /// @dev Thrown when the proof provided can't be verified against the criteria tree.
 error InvalidCriteriaProof();
@@ -26,7 +26,11 @@ library CriteriaResolution {
 
     /// @dev Based on Solmate (https://github.com/Rari-Capital/solmate/blob/main/src/utils/MerkleProofLib.sol)
     ///      Verify proofs for given root and leaf are correct.
-    function verifyProof(bytes32[] calldata proof, bytes32 root, bytes32 leaf) public pure returns (bool isValid) {
+    function verifyProof(
+        bytes32[] calldata proof,
+        bytes32 root,
+        bytes32 leaf
+    ) public pure returns (bool isValid) {
         /// @solidity memory-safe-assembly
         assembly {
             if proof.length {

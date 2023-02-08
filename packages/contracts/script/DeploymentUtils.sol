@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.15;
 
-import {Script, console} from "forge-std/Script.sol";
+import { Script, console } from "forge-std/Script.sol";
 
 struct ContractData {
     string key;
@@ -14,16 +14,11 @@ contract DeploymentUtils is Script {
 
     mapping(string => bool) __madeDir;
 
-    function deploymentsPath(
-        string memory path
-    ) internal pure virtual returns (string memory) {
+    function deploymentsPath(string memory path) internal pure virtual returns (string memory) {
         return string.concat("deployments/", path);
     }
 
-    function registerContract(
-        string memory key,
-        address addr
-    ) internal virtual {
+    function registerContract(string memory key, address addr) internal virtual {
         registeredContracts.push(ContractData(key, addr));
         registeredContractsAddress[key] = addr;
     }
@@ -41,11 +36,7 @@ contract DeploymentUtils is Script {
         __madeDir[path] = true;
     }
 
-    function generateRegisteredContractsJson()
-        internal
-        virtual
-        returns (string memory json)
-    {
+    function generateRegisteredContractsJson() internal virtual returns (string memory json) {
         if (registeredContracts.length == 0) return "";
 
         json = string.concat("{\n");
@@ -66,11 +57,7 @@ contract DeploymentUtils is Script {
 
     function logDeployments() internal view virtual {
         for (uint256 i; i < registeredContracts.length; i++) {
-            console.log(
-                "%s=%s",
-                registeredContracts[i].key,
-                registeredContracts[i].addr
-            );
+            console.log("%s=%s", registeredContracts[i].key, registeredContracts[i].addr);
         }
     }
 

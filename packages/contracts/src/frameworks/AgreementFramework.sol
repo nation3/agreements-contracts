@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import {IArbitrable} from "src/interfaces/IArbitrable.sol";
-import {IAgreementFramework} from "src/interfaces/IAgreementFramework.sol";
-import {Owned} from "src/utils/Owned.sol";
+import { IArbitrable } from "src/interfaces/IArbitrable.sol";
+import { IAgreementFramework } from "src/interfaces/IAgreementFramework.sol";
+import { Owned } from "src/utils/Owned.sol";
 
 abstract contract AgreementFramework is IAgreementFramework, Owned {
     /// @inheritdoc IArbitrable

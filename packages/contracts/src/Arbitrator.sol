@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import {ISignatureTransfer} from "permit2/src/interfaces/ISignatureTransfer.sol";
+import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import {Permit2} from "permit2/src/Permit2.sol";
+import { Permit2 } from "permit2/src/Permit2.sol";
 
-import {PositionParams} from "src/interfaces/AgreementTypes.sol";
-import {ResolutionStatus, Resolution} from "src/interfaces/ArbitrationTypes.sol";
+import { PositionParams } from "src/interfaces/AgreementTypes.sol";
+import { ResolutionStatus, Resolution } from "src/interfaces/ArbitrationTypes.sol";
 import "src/interfaces/ArbitrationErrors.sol";
-import {IArbitrable} from "src/interfaces/IArbitrable.sol";
-import {IArbitrator} from "src/interfaces/IArbitrator.sol";
+import { IArbitrable } from "src/interfaces/IArbitrable.sol";
+import { IArbitrator } from "src/interfaces/IArbitrator.sol";
 
-import {DepositConfig} from "src/utils/interfaces/Deposits.sol";
-import {Controlled} from "src/utils/Controlled.sol";
-import {Toggleable} from "src/utils/Toggleable.sol";
+import { DepositConfig } from "src/utils/interfaces/Deposits.sol";
+import { Controlled } from "src/utils/Controlled.sol";
+import { Toggleable } from "src/utils/Toggleable.sol";
 
 /// @notice Contract with the power to arbitrate Nation3 arbitrable contracts.
 /// The DAO owns this contract and set a controller to operate it.
@@ -29,7 +29,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     Permit2 public immutable permit2;
 
     /// @notice Appeals deposits configuration.
-    DepositConfig deposits;
+    DepositConfig public deposits;
 
     /// @notice Time (in seconds) between when a resolution is submitted and it's executable.
     uint256 public lockPeriod;
@@ -40,9 +40,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @notice Retrieve resolution details.
     /// @param id Id of the resolution to return data from.
     /// @return details Data struct of the resolution.
-    function resolutionDetails(
-        bytes32 id
-    ) external view returns (Resolution memory details) {
+    function resolutionDetails(bytes32 id) external view returns (Resolution memory details) {
         return resolution[id];
     }
 
@@ -75,8 +73,9 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         id = keccak256(abi.encodePacked(framework, dispute));
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Executed)
+        if (resolution_.status == ResolutionStatus.Executed) {
             revert ResolutionIsExecuted();
+        }
 
         bytes32 settlementEncoding = keccak256(abi.encode(settlement));
         resolution_.status = ResolutionStatus.Submitted;
@@ -96,10 +95,12 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         bytes32 id = keccak256(abi.encodePacked(framework, dispute));
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Appealed)
+        if (resolution_.status == ResolutionStatus.Appealed) {
             revert ResolutionIsAppealed();
-        if (resolution_.status == ResolutionStatus.Executed)
+        }
+        if (resolution_.status == ResolutionStatus.Executed) {
             revert ResolutionIsExecuted();
+        }
         if (
             resolution_.status != ResolutionStatus.Endorsed &&
             block.timestamp < resolution_.unlockTime
@@ -107,8 +108,9 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
             revert ResolutionIsLocked();
         }
         bytes32 settlementEncoding = keccak256(abi.encode(settlement));
-        if (resolution_.settlement != settlementEncoding)
+        if (resolution_.settlement != settlementEncoding) {
             revert SettlementPositionsMustMatch();
+        }
 
         resolution_.status = ResolutionStatus.Executed;
 
@@ -126,48 +128,46 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     ) external {
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Idle)
+        if (resolution_.status == ResolutionStatus.Idle) {
             revert NonExistentResolution();
-        if (resolution_.status == ResolutionStatus.Executed)
+        }
+        if (resolution_.status == ResolutionStatus.Executed) {
             revert ResolutionIsExecuted();
-        if (resolution_.status == ResolutionStatus.Endorsed)
+        }
+        if (resolution_.status == ResolutionStatus.Endorsed) {
             revert ResolutionIsEndorsed();
+        }
 
         DepositConfig memory deposit = deposits;
         if (permit.permitted.token != deposit.token) revert InvalidPermit();
         bytes32 settlementEncoding = keccak256(abi.encode(settlement));
-        if (resolution_.settlement != settlementEncoding)
+        if (resolution_.settlement != settlementEncoding) {
             revert SettlementPositionsMustMatch();
+        }
         if (!_isParty(msg.sender, settlement)) revert NoPartOfSettlement();
 
         resolution_.status = ResolutionStatus.Appealed;
 
-        ISignatureTransfer.SignatureTransferDetails
-            memory transferDetails = ISignatureTransfer
-                .SignatureTransferDetails(deposit.recipient, deposit.amount);
-        permit2.permitTransferFrom(
-            permit,
-            transferDetails,
-            msg.sender,
-            signature
-        );
+        ISignatureTransfer.SignatureTransferDetails memory transferDetails = ISignatureTransfer
+            .SignatureTransferDetails(deposit.recipient, deposit.amount);
+        permit2.permitTransferFrom(permit, transferDetails, msg.sender, signature);
 
         emit ResolutionAppealed(id, settlementEncoding, msg.sender);
     }
 
     /// @inheritdoc IArbitrator
-    function endorseResolution(
-        bytes32 id,
-        bytes32 settlement
-    ) external onlyOwner {
+    function endorseResolution(bytes32 id, bytes32 settlement) external onlyOwner {
         Resolution storage resolution_ = resolution[id];
 
-        if (resolution_.status == ResolutionStatus.Idle)
+        if (resolution_.status == ResolutionStatus.Idle) {
             revert NonExistentResolution();
-        if (resolution_.status == ResolutionStatus.Executed)
+        }
+        if (resolution_.status == ResolutionStatus.Executed) {
             revert ResolutionIsExecuted();
-        if (resolution_.settlement != settlement)
+        }
+        if (resolution_.settlement != settlement) {
             revert SettlementPositionsMustMatch();
+        }
 
         resolution_.status = ResolutionStatus.Endorsed;
 

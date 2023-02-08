@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import {Owned} from "src/utils/Owned.sol";
+import { Owned } from "src/utils/Owned.sol";
 
 /// @notice Authorization mixin that extends Owned with Controller rol.
 abstract contract Controlled is Owned {

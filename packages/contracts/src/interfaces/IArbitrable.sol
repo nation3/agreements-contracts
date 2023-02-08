@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import {PositionParams} from "src/interfaces/AgreementTypes.sol";
+import { PositionParams } from "src/interfaces/AgreementTypes.sol";
 
 /// @dev Thrown when trying to perform an operation restricted to the arbitrator without being the arbitrator.
 error OnlyArbitrator();
