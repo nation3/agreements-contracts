@@ -109,7 +109,12 @@ contract CollateralAgreementFramework is AgreementFramework, ReentrancyGuard {
         for (uint256 i = 0; i < partyLength; i++) {
             address party = agreement_.party[i];
             Position memory position = agreement_.position[party];
-            positions[i] = PositionData(position.party, position.balance, position.status);
+            positions[i] = PositionData(
+                position.party,
+                position.balance,
+                position.deposit,
+                position.status
+            );
         }
 
         return positions;
