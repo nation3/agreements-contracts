@@ -32,6 +32,8 @@ struct PositionData {
     address party;
     /// @dev Amount of agreement tokens in the position.
     uint256 balance;
+    /// @dev Amount of tokens deposited for dispute costs.
+    uint256 deposit;
     /// @dev Status of the position.
     PositionStatus status;
 }

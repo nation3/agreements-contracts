@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import {ISignatureTransfer} from "permit2/src/interfaces/ISignatureTransfer.sol";
+import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import {PositionParams} from "src/interfaces/AgreementTypes.sol";
-import {IArbitrable} from "src/interfaces/IArbitrable.sol";
+import { PositionParams } from "src/interfaces/AgreementTypes.sol";
+import { IArbitrable } from "src/interfaces/IArbitrable.sol";
 
 interface IArbitrator {
     /// @dev Raised when a new resolution is submitted.
@@ -12,7 +12,12 @@ interface IArbitrator {
     /// @param dispute Id of the dispute to resolve.
     /// @param resolution Id of the resolution.
     /// @param settlement Encoding of the settlement.
-    event ResolutionSubmitted(address indexed framework, bytes32 indexed dispute, bytes32 indexed resolution, bytes32 settlement);
+    event ResolutionSubmitted(
+        address indexed framework,
+        bytes32 indexed dispute,
+        bytes32 indexed resolution,
+        bytes32 settlement
+    );
 
     /// @dev Raised when a resolution is appealed.
     /// @param resolution Id of the resolution appealed.
@@ -47,7 +52,11 @@ interface IArbitrator {
     /// @param framework address of the framework of the agreement in dispute.
     /// @param dispute Identifier of the agreement in dispute.
     /// @param settlement Array of final positions in the resolution.
-    function executeResolution(IArbitrable framework, bytes32 dispute, PositionParams[] calldata settlement) external;
+    function executeResolution(
+        IArbitrable framework,
+        bytes32 dispute,
+        PositionParams[] calldata settlement
+    ) external;
 
     /// @notice Appeal a submitted resolution.
     /// @param id Identifier of the resolution to appeal.

@@ -24,7 +24,7 @@ contract TokenProvider is Test {
         tokenA.mint(to, MINT_AMOUNT_ERC20);
         tokenB.mint(to, MINT_AMOUNT_ERC20);
     }
-    
+
     function setERC20TestTokenApprovals(Vm vm, address owner, address spender) public {
         vm.startPrank(owner);
         tokenA.approve(spender, type(uint256).max);
