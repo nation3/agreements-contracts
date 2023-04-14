@@ -1,10 +1,22 @@
 {
-  "goerli": {
-    "AgreementFramework": {
-      "address": "0x51b024Ca13F6E044df4932431bF8DD0E5d4b81ba"
+  "mainnet": {
+    "CollateralAgreementFramework": {
+      "address": "0x2E41383506A6715da7dd0985dC401fe720e473c0",
+      "startBlock": 16586489
     },
     "Arbitrator": {
-      "address": "0xA723Fc96d9180637B21048168D0344CC677da64c"
+      "address": "0x1dBEFF62DFa113f7254AaB5772F1AC6E66F94e7e",
+      "startBlock": 16571108
+    }
+  },
+  "goerli": {
+    "CollateralAgreementFramework": {
+      "address": "0x710617547D96573520b5f38668168DaFDBD9EA83",
+      "startBlock": 8458090
+    },
+    "Arbitrator": {
+      "address": "0x1dBEFF62DFa113f7254AaB5772F1AC6E66F94e7e",
+      "startBlock": 8362795
     }
   }
 }
