@@ -1,62 +1,86 @@
-import { newMockEvent } from "matchstick-as"
-import { ethereum, Bytes, Address } from "@graphprotocol/graph-ts"
+import { newMockEvent } from "matchstick-as";
+import { ethereum, Bytes, Address } from "@graphprotocol/graph-ts";
 import {
   ResolutionAppealed,
   ResolutionEndorsed,
   ResolutionExecuted,
   ResolutionSubmitted,
-} from "../generated/Arbitrator/Arbitrator"
+} from "../generated/Arbitrator/Arbitrator";
 
 export function createResolutionAppealedEvent(
   resolution: Bytes,
   settlement: Bytes,
   account: Address
 ): ResolutionAppealed {
-  let resolutionAppealedEvent = changetype<ResolutionAppealed>(newMockEvent())
+  let resolutionAppealedEvent = changetype<ResolutionAppealed>(newMockEvent());
 
-  resolutionAppealedEvent.parameters = new Array()
+  resolutionAppealedEvent.parameters = new Array();
 
   resolutionAppealedEvent.parameters.push(
-    new ethereum.EventParam("resolution", ethereum.Value.fromFixedBytes(resolution))
-  )
+    new ethereum.EventParam(
+      "resolution",
+      ethereum.Value.fromFixedBytes(resolution)
+    )
+  );
   resolutionAppealedEvent.parameters.push(
-    new ethereum.EventParam("settlement", ethereum.Value.fromFixedBytes(settlement))
-  )
+    new ethereum.EventParam(
+      "settlement",
+      ethereum.Value.fromFixedBytes(settlement)
+    )
+  );
   resolutionAppealedEvent.parameters.push(
     new ethereum.EventParam("account", ethereum.Value.fromAddress(account))
-  )
+  );
 
-  return resolutionAppealedEvent
+  return resolutionAppealedEvent;
 }
 
-export function createResolutionEndorsedEvent(resolution: Bytes, settlement: Bytes): ResolutionEndorsed {
-  let resolutionEndorsedEvent = changetype<ResolutionEndorsed>(newMockEvent())
+export function createResolutionEndorsedEvent(
+  resolution: Bytes,
+  settlement: Bytes
+): ResolutionEndorsed {
+  let resolutionEndorsedEvent = changetype<ResolutionEndorsed>(newMockEvent());
 
-  resolutionEndorsedEvent.parameters = new Array()
+  resolutionEndorsedEvent.parameters = new Array();
 
   resolutionEndorsedEvent.parameters.push(
-    new ethereum.EventParam("resolution", ethereum.Value.fromFixedBytes(resolution))
-  )
+    new ethereum.EventParam(
+      "resolution",
+      ethereum.Value.fromFixedBytes(resolution)
+    )
+  );
   resolutionEndorsedEvent.parameters.push(
-    new ethereum.EventParam("settlement", ethereum.Value.fromFixedBytes(settlement))
-  )
+    new ethereum.EventParam(
+      "settlement",
+      ethereum.Value.fromFixedBytes(settlement)
+    )
+  );
 
-  return resolutionEndorsedEvent
+  return resolutionEndorsedEvent;
 }
 
-export function createResolutionExecutedEvent(resolution: Bytes, settlement: Bytes): ResolutionExecuted {
-  let resolutionExecutedEvent = changetype<ResolutionExecuted>(newMockEvent())
+export function createResolutionExecutedEvent(
+  resolution: Bytes,
+  settlement: Bytes
+): ResolutionExecuted {
+  let resolutionExecutedEvent = changetype<ResolutionExecuted>(newMockEvent());
 
-  resolutionExecutedEvent.parameters = new Array()
+  resolutionExecutedEvent.parameters = new Array();
 
   resolutionExecutedEvent.parameters.push(
-    new ethereum.EventParam("resolution", ethereum.Value.fromFixedBytes(resolution))
-  )
+    new ethereum.EventParam(
+      "resolution",
+      ethereum.Value.fromFixedBytes(resolution)
+    )
+  );
   resolutionExecutedEvent.parameters.push(
-    new ethereum.EventParam("settlement", ethereum.Value.fromFixedBytes(settlement))
-  )
+    new ethereum.EventParam(
+      "settlement",
+      ethereum.Value.fromFixedBytes(settlement)
+    )
+  );
 
-  return resolutionExecutedEvent
+  return resolutionExecutedEvent;
 }
 
 export function createResolutionSubmittedEvent(
@@ -65,22 +89,30 @@ export function createResolutionSubmittedEvent(
   resolution: Bytes,
   settlement: Bytes
 ): ResolutionSubmitted {
-  let resolutionSubmittedEvent = changetype<ResolutionSubmitted>(newMockEvent())
+  let resolutionSubmittedEvent = changetype<ResolutionSubmitted>(
+    newMockEvent()
+  );
 
-  resolutionSubmittedEvent.parameters = new Array()
+  resolutionSubmittedEvent.parameters = new Array();
 
   resolutionSubmittedEvent.parameters.push(
     new ethereum.EventParam("framework", ethereum.Value.fromAddress(framework))
-  )
+  );
   resolutionSubmittedEvent.parameters.push(
     new ethereum.EventParam("dispute", ethereum.Value.fromFixedBytes(dispute))
-  )
+  );
   resolutionSubmittedEvent.parameters.push(
-    new ethereum.EventParam("resolution", ethereum.Value.fromFixedBytes(resolution))
-  )
+    new ethereum.EventParam(
+      "resolution",
+      ethereum.Value.fromFixedBytes(resolution)
+    )
+  );
   resolutionSubmittedEvent.parameters.push(
-      new ethereum.EventParam("settlement", ethereum.Value.fromFixedBytes(settlement))
-  )
+    new ethereum.EventParam(
+      "settlement",
+      ethereum.Value.fromFixedBytes(settlement)
+    )
+  );
 
-  return resolutionSubmittedEvent
+  return resolutionSubmittedEvent;
 }
