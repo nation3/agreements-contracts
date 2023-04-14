@@ -1,4 +1,4 @@
-import { assert } from "matchstick-as/assembly/index";
+import { assert, mockIpfsFile } from "matchstick-as/assembly/index";
 import { newMockEvent } from "matchstick-as";
 import { ethereum, BigInt, Bytes, Address } from "@graphprotocol/graph-ts";
 import {
@@ -17,6 +17,7 @@ export function createAgreementCreatedEvent(
   token: Address
 ): AgreementCreated {
   let agreementCreatedEvent = changetype<AgreementCreated>(newMockEvent());
+  mockIpfsFile(metadataURI, "tests/ipfs/metadata.json");
 
   agreementCreatedEvent.parameters = new Array();
 
@@ -42,10 +43,7 @@ export function createAgreementCreatedEvent(
     )
   );
   agreementCreatedEvent.parameters.push(
-    new ethereum.EventParam(
-      "token",
-      ethereum.Value.fromAddress(token)
-    )
+    new ethereum.EventParam("token", ethereum.Value.fromAddress(token))
   );
 
   return agreementCreatedEvent;
@@ -143,22 +141,24 @@ export function assertAgreement(
   criteria: string,
   status: string,
   metadataURI: string,
+  title: string
 ): void {
   assert.fieldEquals("Agreement", id, "status", status);
   assert.fieldEquals("Agreement", id, "termsHash", termsHash);
   assert.fieldEquals("Agreement", id, "criteria", criteria);
   assert.fieldEquals("Agreement", id, "metadataURI", metadataURI);
+  assert.fieldEquals("Agreement", id, "title", title);
 }
 
 export function assertAgreementPosition(
   id: string,
   party: string,
-  balance: string,
+  collateral: string,
   status: string,
   agreement: string
 ): void {
   assert.fieldEquals("AgreementPosition", id, "party", party);
-  assert.fieldEquals("AgreementPosition", id, "balance", balance);
+  assert.fieldEquals("AgreementPosition", id, "collateral", collateral);
   assert.fieldEquals("AgreementPosition", id, "status", status);
   assert.fieldEquals("AgreementPosition", id, "agreement", agreement);
 }

@@ -9,6 +9,7 @@ enum AgreementStatus {
 }
 
 enum PositionStatus {
+    Pending,
     Joined,
     Finalized,
     Withdrawn,
@@ -18,15 +19,18 @@ enum PositionStatus {
 type Agreement @entity {
     "Agreement ID"
     id: String!
-    
+
     "Hash of the detailed terms of the agreement"
     termsHash: Bytes!
 
-    "Required amount to join or merkle root of (address,amount)"
+    "Merkle root of (address,amount) required to join"
     criteria: BigInt!
 
     "Agreement Metadata URI"
     metadataURI: String!
+
+    "Agreement public title"
+    title: String
 
     "Agreement token address"
     token: Bytes!
@@ -50,9 +54,12 @@ type AgreementPosition @entity {
 
     "Holder of the position - address"
     party: Bytes!
+ 
+    "Required collateral to join"
+    requiredCollateral: BigInt
 
-    "Amount of tokens corresponding to this position"
-    balance: BigInt!
+    "Amount of tokens corresponding to this position collateral"
+    collateral: BigInt!
 
     "Status of the agreement position"
     status: PositionStatus!
