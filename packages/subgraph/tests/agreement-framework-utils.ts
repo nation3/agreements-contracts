@@ -1,4 +1,8 @@
-import { assert, mockIpfsFile } from "matchstick-as/assembly/index";
+import {
+  assert,
+  mockIpfsFile,
+  newMockCall,
+} from "matchstick-as/assembly/index";
 import { newMockEvent } from "matchstick-as";
 import { ethereum, BigInt, Bytes, Address } from "@graphprotocol/graph-ts";
 import {
@@ -7,7 +11,8 @@ import {
   AgreementPositionUpdated,
   AgreementFinalized,
   AgreementDisputed,
-} from "../generated/CollateralAgreementFramework/AgreementFramework";
+  SetUpCall,
+} from "../generated/CollateralAgreementFramework/CollateralAgreementFramework";
 
 export function createAgreementCreatedEvent(
   id: Bytes,
@@ -133,6 +138,37 @@ export function createAgreementPositionUpdatedEvent(
   );
 
   return agreementPositionUpdatedEvent;
+}
+
+export function createSetUpCall(
+  framework: Address,
+  arbitrator: Address,
+  token: Address,
+  requiredDeposit: BigInt
+): SetUpCall {
+  let setUpCall = changetype<SetUpCall>(newMockCall());
+
+  let depositConfigTuple = new ethereum.Tuple();
+  depositConfigTuple.push(ethereum.Value.fromAddress(token));
+  depositConfigTuple.push(ethereum.Value.fromUnsignedBigInt(requiredDeposit));
+  depositConfigTuple.push(ethereum.Value.fromAddress(arbitrator));
+
+  setUpCall.inputValues = new Array();
+  setUpCall.inputValues.push(
+    new ethereum.EventParam(
+      "arbitrator_",
+      ethereum.Value.fromAddress(arbitrator)
+    )
+  );
+  setUpCall.inputValues.push(
+    new ethereum.EventParam(
+      "deposits_",
+      ethereum.Value.fromTuple(depositConfigTuple)
+    )
+  );
+  setUpCall.to = framework;
+
+  return setUpCall;
 }
 
 export function assertAgreement(

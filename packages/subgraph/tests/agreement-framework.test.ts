@@ -6,20 +6,22 @@ import {
   afterEach,
   beforeEach,
 } from "matchstick-as/assembly/index";
-import { BigInt, Bytes, Address } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, Address, ethereum } from "@graphprotocol/graph-ts";
 import {
   handleAgreementCreated,
   handleAgreementJoined,
   handleAgreementPositionUpdated,
   handleAgreementFinalized,
   handleAgreementDisputed,
-} from "../src/agreement-framework";
+  handleFrameworkSetup,
+} from "../src/collateral-agreement-framework";
 import {
   createAgreementCreatedEvent,
   createAgreementDisputedEvent,
   createAgreementJoinedEvent,
   createAgreementPositionUpdatedEvent,
   createAgreementFinalizedEvent,
+  createSetUpCall,
   assertAgreement,
   assertAgreementPosition,
 } from "./agreement-framework-utils";
@@ -27,6 +29,8 @@ import {
 const ADDRESS_SAMPLE_1 = "0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7";
 const ADDRESS_SAMPLE_2 = "0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e8";
 const TOKEN_SAMPLE = "0x3333333333333333333333333333333333333333";
+const FRAMEWORK_ADDRESS = "0x000000000000000000000000000000000000000f";
+const ARBITRATOR_ADDRESS = "0x000000000000000000000000000000000000000a";
 
 const AGREEMENT_CREATED_EVENT_SAMPLE_1 = createAgreementCreatedEvent(
   Bytes.fromI32(200),
@@ -128,6 +132,72 @@ const AGREEMENT_DISPUTED_EVENT_SAMPLE_1 = createAgreementDisputedEvent(
   Bytes.fromI32(200),
   Address.fromString(ADDRESS_SAMPLE_1)
 );
+
+describe("handling of setUp", () => {
+  test("initial framework setup", () => {
+    const token = Address.fromString(TOKEN_SAMPLE);
+    const frameworkAddress = Address.fromString(FRAMEWORK_ADDRESS);
+    const arbitratorAddress = Address.fromString(ARBITRATOR_ADDRESS);
+    const requiredDeposit = BigInt.fromI32(3);
+
+    let setUpCall = createSetUpCall(
+      frameworkAddress,
+      arbitratorAddress,
+      token,
+      requiredDeposit
+    );
+
+    handleFrameworkSetup(setUpCall);
+
+    assert.entityCount("AgreementFramework", 1);
+    assert.fieldEquals(
+      "AgreementFramework",
+      frameworkAddress.toHexString(),
+      "arbitrator",
+      arbitratorAddress.toHexString()
+    );
+    assert.fieldEquals(
+      "AgreementFramework",
+      frameworkAddress.toHexString(),
+      "requiredDeposit",
+      requiredDeposit.toString()
+    );
+  });
+
+  test("framework setup update", () => {
+    const token = Address.fromString(TOKEN_SAMPLE);
+    const frameworkAddress = Address.fromString(FRAMEWORK_ADDRESS);
+    const arbitratorAddress = Address.fromString(
+      "0x00000000000000000000000000000000000000a2"
+    );
+    const requiredDeposit = BigInt.fromI32(5);
+
+    let setUpCall = createSetUpCall(
+      frameworkAddress,
+      arbitratorAddress,
+      token,
+      requiredDeposit
+    );
+
+    assert.entityCount("AgreementFramework", 1);
+
+    handleFrameworkSetup(setUpCall);
+
+    assert.entityCount("AgreementFramework", 1);
+    assert.fieldEquals(
+      "AgreementFramework",
+      frameworkAddress.toHexString(),
+      "arbitrator",
+      arbitratorAddress.toHexString()
+    );
+    assert.fieldEquals(
+      "AgreementFramework",
+      frameworkAddress.toHexString(),
+      "requiredDeposit",
+      requiredDeposit.toString()
+    );
+  });
+});
 
 describe("handling of AgreementCreated", () => {
   afterEach(() => {

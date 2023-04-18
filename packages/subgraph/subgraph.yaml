@@ -10,7 +10,7 @@ dataSources:
     name: CollateralAgreementFramework
     network: goerli
     source:
-      abi: AgreementFramework
+      abi: CollateralAgreementFramework
       address: "0x710617547D96573520b5f38668168DaFDBD9EA83"
       startBlock: 8458090
     mapping:
@@ -18,12 +18,13 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
+        - AgreementFramework
         - Agreement
         - AgreementPosition
         - Dispute
       abis:
-        - name: AgreementFramework
-          file: ./abis/IAgreementFramework.json
+        - name: CollateralAgreementFramework
+          file: ./abis/CollateralAgreementFramework.json
       eventHandlers:
         - event: AgreementCreated(indexed bytes32,bytes32,uint256,string,address)
           handler: handleAgreementCreated
@@ -35,7 +36,10 @@ dataSources:
           handler: handleAgreementFinalized
         - event: AgreementDisputed(indexed bytes32,indexed address)
           handler: handleAgreementDisputed
-      file: ./src/agreement-framework.ts
+      callHandlers:
+        - function: setUp(address,(address,uint256,address))
+          handler: handleFrameworkSetup
+      file: ./src/collateral-agreement-framework.ts
   - kind: ethereum
     name: Arbitrator
     network: goerli

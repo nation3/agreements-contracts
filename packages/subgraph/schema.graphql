@@ -16,6 +16,17 @@ enum PositionStatus {
     Disputed
 }
 
+type AgreementFramework @entity {
+    "Agreement Framework ID"
+    id: String!
+
+    "Arbitrator address"
+    arbitrator: Bytes!
+
+    "Current required deposit to join an agreement"
+    requiredDeposit: BigInt!
+}
+
 type Agreement @entity {
     "Agreement ID"
     id: String!

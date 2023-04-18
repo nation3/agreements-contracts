@@ -5,16 +5,21 @@ import {
   Address,
   BigInt,
   TypedMap,
-  TypedMapEntry,
 } from "@graphprotocol/graph-ts";
 import {
+  SetUpCall,
   AgreementCreated,
   AgreementFinalized,
   AgreementJoined,
   AgreementPositionUpdated,
   AgreementDisputed,
-} from "../generated/CollateralAgreementFramework/AgreementFramework";
-import { Agreement, AgreementPosition, Dispute } from "../generated/schema";
+} from "../generated/CollateralAgreementFramework/CollateralAgreementFramework";
+import {
+  AgreementFramework,
+  Agreement,
+  AgreementPosition,
+  Dispute,
+} from "../generated/schema";
 
 function createAgreementPosition(
   agreementId: string,
@@ -155,4 +160,15 @@ export function handleAgreementDisputed(event: AgreementDisputed): void {
   }
 
   dispute.save();
+}
+
+export function handleFrameworkSetup(call: SetUpCall): void {
+  let id = call.to.toHexString();
+  let framework = AgreementFramework.load(id);
+  if (framework == null) {
+    framework = new AgreementFramework(id);
+  }
+  framework.arbitrator = call.inputs.arbitrator_;
+  framework.requiredDeposit = call.inputs.deposits_.amount;
+  framework.save();
 }
