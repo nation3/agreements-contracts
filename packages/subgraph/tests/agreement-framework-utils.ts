@@ -13,6 +13,21 @@ import {
   AgreementDisputed,
   SetUpCall,
 } from "../generated/CollateralAgreementFramework/CollateralAgreementFramework";
+import { AgreementFramework } from "../generated/schema";
+
+export function createDefaultFramework(
+  arbitrator: Address,
+  requiredDeposit: BigInt
+): void {
+  const defaultAddress = Address.fromString(
+    "0xA16081F360e3847006dB660bae1c6d1b2e17eC2A"
+  );
+
+  let framework = new AgreementFramework(defaultAddress.toHexString());
+  framework.arbitrator = arbitrator;
+  framework.requiredDeposit = requiredDeposit;
+  framework.save();
+}
 
 export function createAgreementCreatedEvent(
   id: Bytes,
@@ -190,11 +205,13 @@ export function assertAgreementPosition(
   id: string,
   party: string,
   collateral: string,
+  deposit: string,
   status: string,
   agreement: string
 ): void {
   assert.fieldEquals("AgreementPosition", id, "party", party);
   assert.fieldEquals("AgreementPosition", id, "collateral", collateral);
+  assert.fieldEquals("AgreementPosition", id, "deposit", deposit);
   assert.fieldEquals("AgreementPosition", id, "status", status);
   assert.fieldEquals("AgreementPosition", id, "agreement", agreement);
 }

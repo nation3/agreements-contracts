@@ -26,12 +26,14 @@ function createAgreementPosition(
   party: Address,
   requiredCollateral: BigInt,
   collateral: BigInt,
+  deposit: BigInt,
   status: string
 ): void {
   let position = new AgreementPosition(agreementId.concat(party.toHexString()));
   position.party = party;
   position.requiredCollateral = requiredCollateral;
   position.collateral = collateral;
+  position.deposit = deposit;
   position.status = status;
   position.agreement = agreementId;
   position.save();
@@ -53,6 +55,7 @@ function createAgreementPositionFromResolver(
     party,
     requiredCollateral,
     BigInt.zero(),
+    BigInt.zero(),
     "Pending"
   );
 }
@@ -64,7 +67,13 @@ export function handleAgreementCreated(event: AgreementCreated): void {
     metadata = json.fromBytes(file).toObject();
   }
 
+  let framework = AgreementFramework.load(event.address.toHexString());
+  if (framework === null) {
+    framework = new AgreementFramework(event.address.toHexString());
+  }
+
   let agreement = new Agreement(event.params.id.toHexString());
+  agreement.framework = framework.id;
   agreement.termsHash = event.params.termsHash;
   agreement.criteria = event.params.criteria;
   agreement.status = "Created";
@@ -101,12 +110,17 @@ export function handleAgreementFinalized(event: AgreementFinalized): void {
 }
 
 export function handleAgreementJoined(event: AgreementJoined): void {
+  let framework = AgreementFramework.load(event.address.toHexString());
   let agreement = Agreement.load(event.params.id.toHexString());
   let position = AgreementPosition.load(
     event.params.id.toHexString().concat(event.params.party.toHexString())
   );
 
+  let requiredDeposit =
+    framework !== null ? framework.requiredDeposit : BigInt.zero();
+
   if (position !== null) {
+    position.deposit = requiredDeposit;
     position.collateral = event.params.balance;
     position.status = "Joined";
     position.save();
@@ -116,6 +130,7 @@ export function handleAgreementJoined(event: AgreementJoined): void {
       event.params.party,
       event.params.balance,
       event.params.balance,
+      requiredDeposit,
       "Joined"
     );
   }
@@ -136,9 +151,13 @@ export function handleAgreementPositionUpdated(
   if (position !== null) {
     position.collateral = event.params.balance;
     if (event.params.status == 2) position.status = "Finalized";
-    else if (event.params.status == 3) position.status = "Withdrawn";
-    else if (event.params.status == 4) position.status = "Disputed";
-    else position.status = "Joined";
+    else if (event.params.status == 3) {
+      position.deposit = BigInt.zero();
+      position.status = "Withdrawn";
+    } else if (event.params.status == 4) {
+      position.deposit = BigInt.zero();
+      position.status = "Disputed";
+    } else position.status = "Joined";
     position.save();
   }
 }

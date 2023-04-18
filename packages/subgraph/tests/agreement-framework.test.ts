@@ -5,8 +5,9 @@ import {
   clearStore,
   afterEach,
   beforeEach,
+  beforeAll,
 } from "matchstick-as/assembly/index";
-import { BigInt, Bytes, Address, ethereum } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, Address } from "@graphprotocol/graph-ts";
 import {
   handleAgreementCreated,
   handleAgreementJoined,
@@ -24,6 +25,7 @@ import {
   createSetUpCall,
   assertAgreement,
   assertAgreementPosition,
+  createDefaultFramework,
 } from "./agreement-framework-utils";
 
 const ADDRESS_SAMPLE_1 = "0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7";
@@ -31,6 +33,8 @@ const ADDRESS_SAMPLE_2 = "0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e8";
 const TOKEN_SAMPLE = "0x3333333333333333333333333333333333333333";
 const FRAMEWORK_ADDRESS = "0x000000000000000000000000000000000000000f";
 const ARBITRATOR_ADDRESS = "0x000000000000000000000000000000000000000a";
+
+const DEFAULT_DEPOSIT = BigInt.fromI32(3);
 
 const AGREEMENT_CREATED_EVENT_SAMPLE_1 = createAgreementCreatedEvent(
   Bytes.fromI32(200),
@@ -200,6 +204,13 @@ describe("handling of setUp", () => {
 });
 
 describe("handling of AgreementCreated", () => {
+  beforeEach(() => {
+    createDefaultFramework(
+      Address.fromString(ARBITRATOR_ADDRESS),
+      DEFAULT_DEPOSIT
+    );
+  });
+
   afterEach(() => {
     clearStore();
   });
@@ -230,12 +241,14 @@ describe("handling of AgreementCreated", () => {
       created.id.toHexString().concat(willJoin.party.toHexString()),
       willJoin.party.toHexString(),
       "0",
+      "0",
       "Pending",
       created.id.toHexString()
     );
     assertAgreementPosition(
       created.id.toHexString().concat(willJoin2.party.toHexString()),
       willJoin2.party.toHexString(),
+      "0",
       "0",
       "Pending",
       created.id.toHexString()
@@ -278,6 +291,10 @@ describe("handling of AgreementJoined", () => {
     });
 
     beforeEach(() => {
+      createDefaultFramework(
+        Address.fromString(ARBITRATOR_ADDRESS),
+        DEFAULT_DEPOSIT
+      );
       handleAgreementCreated(AGREEMENT_CREATED_EVENT_SAMPLE_1);
     });
 
@@ -304,6 +321,7 @@ describe("handling of AgreementJoined", () => {
         positionId,
         joined.party.toHexString(),
         joined.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined.id.toHexString()
       );
@@ -336,6 +354,7 @@ describe("handling of AgreementJoined", () => {
         positionId,
         joined.party.toHexString(),
         joined.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined.id.toHexString()
       );
@@ -343,6 +362,7 @@ describe("handling of AgreementJoined", () => {
         position2Id,
         joined2.party.toHexString(),
         joined2.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined2.id.toHexString()
       );
@@ -355,6 +375,10 @@ describe("handling of AgreementJoined", () => {
     });
 
     beforeEach(() => {
+      createDefaultFramework(
+        Address.fromString(ARBITRATOR_ADDRESS),
+        DEFAULT_DEPOSIT
+      );
       handleAgreementCreated(AGREEMENT_CREATED_EVENT_SAMPLE_1);
       handleAgreementCreated(AGREEMENT_CREATED_EVENT_SAMPLE_2);
     });
@@ -394,6 +418,7 @@ describe("handling of AgreementJoined", () => {
         positionId,
         joined.party.toHexString(),
         joined.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined.id.toHexString()
       );
@@ -401,6 +426,7 @@ describe("handling of AgreementJoined", () => {
         position2Id,
         joined2.party.toHexString(),
         joined2.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined2.id.toHexString()
       );
@@ -424,6 +450,7 @@ describe("handling of AgreementJoined", () => {
         joined.id.toHexString().concat(joined.party.toHexString()),
         joined.party.toHexString(),
         joined.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined.id.toHexString()
       );
@@ -431,6 +458,7 @@ describe("handling of AgreementJoined", () => {
         joined2.id.toHexString().concat(joined2.party.toHexString()),
         joined2.party.toHexString(),
         joined2.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined2.id.toHexString()
       );
@@ -438,6 +466,7 @@ describe("handling of AgreementJoined", () => {
         joined3.id.toHexString().concat(joined3.party.toHexString()),
         joined3.party.toHexString(),
         joined3.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined3.id.toHexString()
       );
@@ -445,6 +474,7 @@ describe("handling of AgreementJoined", () => {
         joined4.id.toHexString().concat(joined4.party.toHexString()),
         joined4.party.toHexString(),
         joined4.balance.toString(),
+        DEFAULT_DEPOSIT.toString(),
         "Joined",
         joined4.id.toHexString()
       );
@@ -458,6 +488,10 @@ describe("handling of AgreementPositionUpdated", () => {
   });
 
   beforeEach(() => {
+    createDefaultFramework(
+      Address.fromString(ARBITRATOR_ADDRESS),
+      DEFAULT_DEPOSIT
+    );
     handleAgreementCreated(AGREEMENT_CREATED_EVENT_SAMPLE_1);
     handleAgreementJoined(AGREEMENT_JOINED_EVENT_SAMPLE_1);
   });
@@ -474,6 +508,7 @@ describe("handling of AgreementPositionUpdated", () => {
       updated.id.toHexString().concat(updated.party.toHexString()),
       updated.party.toHexString(),
       updated.balance.toString(),
+      DEFAULT_DEPOSIT.toString(),
       "Joined",
       updated.id.toHexString()
     );
@@ -491,6 +526,7 @@ describe("handling of AgreementPositionUpdated", () => {
       updated.id.toHexString().concat(updated.party.toHexString()),
       updated.party.toHexString(),
       updated.balance.toString(),
+      DEFAULT_DEPOSIT.toString(),
       "Finalized",
       updated.id.toHexString()
     );
@@ -508,6 +544,7 @@ describe("handling of AgreementPositionUpdated", () => {
       updated.id.toHexString().concat(updated.party.toHexString()),
       updated.party.toHexString(),
       updated.balance.toString(),
+      "0",
       "Disputed",
       updated.id.toHexString()
     );
@@ -525,6 +562,7 @@ describe("handling of AgreementPositionUpdated", () => {
       updated.id.toHexString().concat(updated.party.toHexString()),
       updated.party.toHexString(),
       updated.balance.toString(),
+      "0",
       "Withdrawn",
       updated.id.toHexString()
     );
@@ -537,6 +575,10 @@ describe("handling of AgreementFinalized", () => {
   });
 
   beforeEach(() => {
+    createDefaultFramework(
+      Address.fromString(ARBITRATOR_ADDRESS),
+      DEFAULT_DEPOSIT
+    );
     handleAgreementCreated(AGREEMENT_CREATED_EVENT_SAMPLE_1);
     handleAgreementJoined(AGREEMENT_JOINED_EVENT_SAMPLE_1);
     handleAgreementJoined(AGREEMENT_JOINED_EVENT_SAMPLE_2);
@@ -566,6 +608,7 @@ describe("handling of AgreementFinalized", () => {
       finalized.id.toHexString().concat(finalized.party.toHexString()),
       finalized.party.toHexString(),
       finalized.balance.toString(),
+      DEFAULT_DEPOSIT.toString(),
       "Finalized",
       finalized.id.toHexString()
     );
@@ -573,6 +616,7 @@ describe("handling of AgreementFinalized", () => {
       finalized2.id.toHexString().concat(finalized2.party.toHexString()),
       finalized2.party.toHexString(),
       finalized2.balance.toString(),
+      DEFAULT_DEPOSIT.toString(),
       "Finalized",
       finalized2.id.toHexString()
     );
@@ -585,6 +629,10 @@ describe("handling of AgreementDisputed", () => {
   });
 
   beforeEach(() => {
+    createDefaultFramework(
+      Address.fromString(ARBITRATOR_ADDRESS),
+      DEFAULT_DEPOSIT
+    );
     handleAgreementCreated(AGREEMENT_CREATED_EVENT_SAMPLE_1);
     handleAgreementJoined(AGREEMENT_JOINED_EVENT_SAMPLE_1);
     handleAgreementJoined(AGREEMENT_JOINED_EVENT_SAMPLE_2);
@@ -620,6 +668,7 @@ describe("handling of AgreementDisputed", () => {
       joined.id.toHexString().concat(joined.party.toHexString()),
       joined.party.toHexString(),
       joined.balance.toString(),
+      "0",
       "Disputed",
       joined.id.toHexString()
     );
@@ -627,6 +676,7 @@ describe("handling of AgreementDisputed", () => {
       joined2.id.toHexString().concat(joined2.party.toHexString()),
       joined2.party.toHexString(),
       joined2.balance.toString(),
+      DEFAULT_DEPOSIT.toString(),
       "Joined",
       joined2.id.toHexString()
     );

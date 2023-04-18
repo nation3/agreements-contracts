@@ -31,6 +31,9 @@ type Agreement @entity {
     "Agreement ID"
     id: String!
 
+    "Framework this agreement belongs to"
+    framework: AgreementFramework!
+
     "Hash of the detailed terms of the agreement"
     termsHash: Bytes!
 
@@ -71,6 +74,9 @@ type AgreementPosition @entity {
 
     "Amount of tokens corresponding to this position collateral"
     collateral: BigInt!
+
+    "Amount of protocol tokens deposited to cover dispute"
+    deposit: BigInt!
 
     "Status of the agreement position"
     status: PositionStatus!
