@@ -24,7 +24,7 @@ contract MockArbitrable is IArbitrable {
         return id;
     }
 
-    function settleDispute(bytes32 id, PositionParams[] calldata settlement) public {
+    function settleDispute(bytes32 id, bytes calldata settlement) public {
         if (msg.sender != arbitrator) revert OnlyArbitrator();
         if (settlement.length <= 0) revert SettlementPositionsMustMatch();
         disputeStatus[id] = 2;

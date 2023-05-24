@@ -3,8 +3,6 @@ pragma solidity ^0.8.17;
 
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import { Permit2 } from "permit2/src/Permit2.sol";
-
 import { PositionParams } from "src/interfaces/AgreementTypes.sol";
 import { ResolutionStatus, Resolution } from "src/interfaces/ArbitrationTypes.sol";
 import "src/interfaces/ArbitrationErrors.sol";
@@ -26,7 +24,7 @@ import { Toggleable } from "src/utils/Toggleable.sol";
 /// Anyone can execute resolutions.
 contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @notice Address of the Permit2 contract deployment.
-    Permit2 public immutable permit2;
+    ISignatureTransfer public immutable permit2;
 
     /// @notice Appeals deposits configuration.
     DepositConfig public deposits;
@@ -44,7 +42,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         return resolution[id];
     }
 
-    constructor(Permit2 permit2_, address owner) Controlled(owner, owner) {
+    constructor(ISignatureTransfer permit2_, address owner) Controlled(owner, owner) {
         permit2 = permit2_;
     }
 
@@ -114,7 +112,8 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
 
         resolution_.status = ResolutionStatus.Executed;
 
-        framework.settleDispute(dispute, settlement);
+        // framework.settleDispute(dispute, settlement);
+        framework.settleDispute(dispute, abi.encode(settlement)); // Fix this.
 
         emit ResolutionExecuted(id, settlementEncoding);
     }

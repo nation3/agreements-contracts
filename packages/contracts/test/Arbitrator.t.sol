@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import { TestConstants } from "test/utils/Constants.sol";
+import { TestConstants } from "test/utils/TestConstants.sol";
 import { MockArbitrable } from "test/utils/mocks/MockArbitrable.sol";
 import { PermitSignature } from "test/utils/PermitSignature.sol";
 import { TokenProvider } from "test/utils/TokenProvider.sol";
@@ -16,6 +16,7 @@ import { ResolutionStatus, Resolution } from "src/interfaces/ArbitrationTypes.so
 
 import { DepositConfig } from "src/utils/interfaces/Deposits.sol";
 import { Arbitrator } from "src/Arbitrator.sol";
+import { IEIP712 } from "./utils/IERC712.sol";
 
 contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
     Arbitrator arbitrator;
@@ -30,10 +31,10 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
 
     function setUp() public {
         initializeERC20Tokens();
-        DOMAIN_SEPARATOR = permit2.DOMAIN_SEPARATOR();
+        DOMAIN_SEPARATOR = IEIP712(permit2).DOMAIN_SEPARATOR();
         appeals = DepositConfig(address(tokenA), 2e17, address(0xD40));
 
-        arbitrator = new Arbitrator(permit2, address(this));
+        arbitrator = new Arbitrator(ISignatureTransfer(permit2), address(this));
         arbitrable = new MockArbitrable();
 
         arbitrator.setUp(LOCK_PERIOD, true, appeals);
