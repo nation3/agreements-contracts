@@ -40,8 +40,8 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
         arbitrator.setUp(LOCK_PERIOD, true, appeals);
         arbitrable.setUp(address(arbitrator));
 
-        setERC20TestTokens(bob);
-        setERC20TestTokenApprovals(vm, bob, address(permit2));
+        setERC20TestTokens(testSubjects[0]);
+        setERC20TestTokenApprovals(vm, testSubjects[0], address(permit2));
 
         dispute = arbitrable.createDispute();
     }
@@ -181,8 +181,8 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
 
     function settlement() internal view returns (PositionParams[] memory settlement_) {
         settlement_ = new PositionParams[](2);
-        settlement_[0] = PositionParams(bob, 3 * 1e18);
-        settlement_[1] = PositionParams(alice, 0);
+        settlement_[0] = PositionParams(testSubjects[0], 3 * 1e18);
+        settlement_[1] = PositionParams(testSubjects[1], 0);
     }
 
     function submitResolution() internal returns (bytes32 id) {
@@ -202,7 +202,7 @@ contract ArbitratorTest is Test, TestConstants, TokenProvider, PermitSignature {
             DOMAIN_SEPARATOR
         );
 
-        vm.prank(bob);
+        vm.prank(testSubjects[0]);
         arbitrator.appealResolution(id, settlement(), permit, signature);
     }
 

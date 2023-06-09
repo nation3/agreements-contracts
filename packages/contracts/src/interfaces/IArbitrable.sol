@@ -7,6 +7,9 @@ error OnlyArbitrator();
 /// @notice Minimal interface for arbitrable contracts.
 /// @dev Implementers must write the logic to raise and settle disputes.
 interface IArbitrable {
+    error NotArbitrator();
+    error InvalidSettlement();
+
     /// @notice Address capable of settling disputes.
     function arbitrator() external view returns (address);
 
