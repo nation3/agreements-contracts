@@ -21,27 +21,10 @@ contract TokenProvider is Test, DeployPermit2, TestConstants {
         tokenA = new MockERC20("Test Token A", "TA", 18);
         tokenB = new MockERC20("Test Token B", "TB", 18);
 
-        setERC20TestTokens(bob);
-        setERC20TestTokens(alice);
-        setERC20TestTokens(cafe);
-        setERC20TestTokens(food);
-        setERC20TestTokens(beef);
-        setERC20TestTokens(face);
-        setERC20TestTokens(dead);
-        setERC20TestTokens(bed);
-        setERC20TestTokens(fade);
-        setERC20TestTokens(cab);
-
-        setERC20TestTokenApprovals(vm, bob, address(permit2));
-        setERC20TestTokenApprovals(vm, alice, address(permit2));
-        setERC20TestTokenApprovals(vm, cafe, address(permit2));
-        setERC20TestTokenApprovals(vm, food, address(permit2));
-        setERC20TestTokenApprovals(vm, beef, address(permit2));
-        setERC20TestTokenApprovals(vm, face, address(permit2));
-        setERC20TestTokenApprovals(vm, dead, address(permit2));
-        setERC20TestTokenApprovals(vm, bed, address(permit2));
-        setERC20TestTokenApprovals(vm, fade, address(permit2));
-        setERC20TestTokenApprovals(vm, cab, address(permit2));
+        for (uint256 i; i < testSubjects.length; ++i) {
+            setERC20TestTokens(testSubjects[i]);
+            setERC20TestTokenApprovals(vm, testSubjects[i], address(permit2));
+        }
     }
 
     function setERC20TestTokens(address to) public {

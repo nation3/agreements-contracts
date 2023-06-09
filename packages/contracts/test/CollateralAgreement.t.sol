@@ -20,6 +20,7 @@ import { DepositConfig } from "../src/utils/interfaces/Deposits.sol";
 import { CollateralAgreement } from "../src/frameworks/collateral/CollateralAgreement.sol";
 import { ICollateralAgreement } from "../src/frameworks/collateral/ICollateralAgreement.sol";
 import { CollateralHash } from "../src/frameworks/collateral/CollateralHash.sol";
+import { IAgreementFramework } from "../src/frameworks/IAgreementFramework.sol";
 
 import { IEIP712 } from "./utils/IERC712.sol";
 import { console2 } from "forge-std/Console2.sol";
@@ -50,105 +51,177 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
     }
 
     function testJoinWithSignatures() public {
-        ICollateralAgreement.PartySetup[] memory parties = new ICollateralAgreement.PartySetup[](3);
+        _joinAgreementWithNParties(10);
+    }
 
-        parties[0] = ICollateralAgreement.PartySetup(bob, 1e17);
-        parties[1] = ICollateralAgreement.PartySetup(alice, 1e17);
-        parties[2] = ICollateralAgreement.PartySetup(cafe, 1e17);
+    function testDisputeAgreementByJoinedParty() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+    }
+
+    function testRevertWhenDisputeAgreementByNotJoinedParty() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2);
+        vm.prank(testSubjects[2]);
+        vm.expectRevert(IAgreementFramework.PartyNotJoined.selector);
+        framework.disputeAgreement(agreementId);
+    }
+
+    function testRevertWhenDisputeAgreementByTwoJoinedParties() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+        vm.prank(testSubjects[1]);
+        vm.expectRevert(IAgreementFramework.AgreementNotOngoing.selector);
+        framework.disputeAgreement(agreementId);
+    }
+
+    function testFinalizeAgreement() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2);
+        _finalizeAgreementWithNParties(2, agreementId, false);
+    }
+
+    function testRevertWhenPartialFinalizeAgreement() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2);
+        vm.expectRevert(ICollateralAgreement.InvalidPartySetupLength.selector);
+        _finalizeAgreementWithNParties(1, agreementId, false);
+    }
+
+    function _joinAgreementWithNParties(
+        uint256 numberOfParties
+    ) internal returns (bytes32 agreementId) {
+        ICollateralAgreement.PartySetup[] memory parties = new ICollateralAgreement.PartySetup[](
+            numberOfParties
+        );
+
+        for (uint i; i < numberOfParties; ++i) {
+            parties[i] = ICollateralAgreement.PartySetup(testSubjects[i], 1e17);
+        }
 
         ICollateralAgreement.AgreementSetup memory agreementSetup = ICollateralAgreement
             .AgreementSetup(keccak256("terms"), address(tokenA), bytes32(0), "URI", parties);
 
-        // Joining parties Signatures
         ICollateralAgreement.PartyPermit[]
-            memory joinPermits = new ICollateralAgreement.PartyPermit[](3);
-
-        joinPermits[0] = _getPartyPermitForAgreementSetup(
-            agreementSetup,
-            0,
-            block.timestamp + 1 days,
-            0xB0B
-        );
-        joinPermits[1] = _getPartyPermitForAgreementSetup(
-            agreementSetup,
-            1,
-            block.timestamp + 1 days,
-            0xA11CE
-        );
-        joinPermits[2] = _getPartyPermitForAgreementSetup(
-            agreementSetup,
-            2,
-            block.timestamp + 1 days,
-            0xCAFE
-        );
-
-        // Permit2 signature and transfer
-        TokenPair[] memory tokenPairs = new TokenPair[](2);
-        tokenPairs[0] = TokenPair(address(tokenB), deposits.amount);
-        tokenPairs[1] = TokenPair(address(tokenA), bobStake);
+            memory joinPermits = new ICollateralAgreement.PartyPermit[](numberOfParties);
 
         ISignatureTransfer.PermitBatchTransferFrom[]
-            memory transferPermits = new ISignatureTransfer.PermitBatchTransferFrom[](3);
+            memory transferPermits = new ISignatureTransfer.PermitBatchTransferFrom[](
+                numberOfParties
+            );
+        ICollateralAgreement.Permit2SignatureTransfer[]
+            memory permit2Signatures = new ICollateralAgreement.Permit2SignatureTransfer[](
+                numberOfParties
+            );
 
-        transferPermits[0] = defaultERC20PermitMultiple(tokenPairs, 0);
-        transferPermits[1] = defaultERC20PermitMultiple(tokenPairs, 1);
-        transferPermits[2] = defaultERC20PermitMultiple(tokenPairs, 2);
+        bytes[] memory transferSignatures = new bytes[](numberOfParties);
 
-        bytes[] memory transferSignatures = new bytes[](3);
+        TokenPair[] memory tokenPairs = new TokenPair[](2);
+        tokenPairs[0] = TokenPair(address(tokenB), deposits.amount);
+        tokenPairs[1] = TokenPair(address(tokenA), 1 * 1e17);
 
-        transferSignatures[0] = getPermitBatchTransferSignature(
-            transferPermits[0],
-            address(framework),
-            0xB0B,
-            PERMIT2_DOMAIN_SEPARATOR
-        );
-        transferSignatures[1] = getPermitBatchTransferSignature(
-            transferPermits[1],
-            address(framework),
-            0xA11CE,
-            PERMIT2_DOMAIN_SEPARATOR
-        );
-        transferSignatures[2] = getPermitBatchTransferSignature(
-            transferPermits[2],
-            address(framework),
-            0xCAFE,
-            PERMIT2_DOMAIN_SEPARATOR
-        );
+        for (uint i; i < numberOfParties; ++i) {
+            joinPermits[i] = _getPartyPermitForAgreementSetup(
+                agreementSetup,
+                0,
+                block.timestamp + 1 days,
+                testSubjectKeys[i]
+            );
 
-        framework.createWithSignatures(
+            transferPermits[i] = defaultERC20PermitMultiple(tokenPairs, 0);
+
+            transferSignatures[i] = getPermitBatchTransferSignature(
+                transferPermits[i],
+                address(framework),
+                testSubjectKeys[i],
+                PERMIT2_DOMAIN_SEPARATOR
+            );
+
+            permit2Signatures[i] = ICollateralAgreement.Permit2SignatureTransfer({
+                transferPermit: transferPermits[i],
+                transferSignature: transferSignatures[i]
+            });
+        }
+
+        agreementId = framework.createWithSignatures(
             agreementSetup,
             joinPermits,
-            transferPermits,
-            transferSignatures
+            permit2Signatures
         );
     }
 
-    // MOVE THIS TO ANOTHER FILE
+    function _finalizeAgreementWithNParties(
+        uint256 numberOfParties,
+        bytes32 agreementId,
+        bool doTransfers
+    ) internal {
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](numberOfParties);
 
-    /* function _createPositionSignature(
-        ICollateralAgreement.AgreementSetup memory agreementSetup,
-        uint256 privateKey
-    ) public returns (ICollateralAgreement.PartySetup memory) {
-        return
-            ICollateralAgreement.Position({
-                nonce: 0,
-                deadline: block.timestamp + 1 days,
-                signature: _getPositionSignatureForAgreementSetup(
-                    agreementSetup,
+        ICollateralAgreement.PartyPermit[]
+            memory partySignatures = new ICollateralAgreement.PartyPermit[](numberOfParties);
+
+        for (uint256 i; i < numberOfParties; ++i) {
+            partySetups[i] = ICollateralAgreement.PartySetup(testSubjects[i], 0);
+
+            partySignatures[i] = ICollateralAgreement.PartyPermit({
+                signature: _getPartySignatureForUpdateParty(
+                    partySetups[i],
+                    keccak256(abi.encodePacked("PARTY_STATUS_FINALIZED")),
                     0,
                     block.timestamp + 1 days,
-                    privateKey,
+                    testSubjectKeys[i],
                     COLLATERAL_DOMAIN_SEPARATOR
-                )
+                ),
+                nonce: 0,
+                deadline: block.timestamp + 1 days
             });
-    } */
+        }
+
+        framework.finalizeAgreement(agreementId, partySetups, partySignatures, doTransfers);
+    }
+
+    function _getPartySignatureForUpdateParty(
+        ICollateralAgreement.PartySetup memory partySetup,
+        bytes32 status,
+        uint256 nonce,
+        uint256 deadline,
+        uint256 privateKey,
+        bytes32 domainSeparator
+    ) internal pure returns (bytes memory sig) {
+        bytes32 msgHash = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                domainSeparator,
+                keccak256(
+                    abi.encode(
+                        CollateralHash.UPDATE_PARTY_TYPEHASH,
+                        keccak256(
+                            abi.encode(
+                                CollateralHash.PARTY_SETUP_TYPEHASH,
+                                partySetup.signer,
+                                partySetup.collateral
+                            )
+                        ),
+                        status,
+                        nonce,
+                        deadline
+                    )
+                )
+            )
+        );
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, msgHash);
+        return bytes.concat(r, s, bytes1(v));
+    }
+
+    // MOVE THIS TO ANOTHER FILE
 
     function _getPartyPermitForAgreementSetup(
         ICollateralAgreement.AgreementSetup memory agreementSetup,
         uint256 nonce,
         uint256 deadline,
         uint256 privateKey
-    ) public returns (ICollateralAgreement.PartyPermit memory) {
+    ) internal view returns (ICollateralAgreement.PartyPermit memory) {
         return
             ICollateralAgreement.PartyPermit({
                 nonce: nonce,

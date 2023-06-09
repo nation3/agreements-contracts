@@ -9,7 +9,10 @@ interface IAgreementFramework is IArbitrable {
     error AgreementNotOngoing();
     error InvalidCollateral();
     error InvalidPartyStatus();
+
     error AgreementNotFinalized();
+    error AgreementNotDisputed();
+    error AgreementIsFinalized();
 
     error InvalidPermit2();
 

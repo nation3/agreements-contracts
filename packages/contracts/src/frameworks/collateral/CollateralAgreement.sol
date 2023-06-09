@@ -24,7 +24,6 @@ import { AgreementFramework } from "../../frameworks/AgreementFramework.sol";
 import { DepositConfig } from "../../utils/interfaces/Deposits.sol";
 import { Owned } from "../../utils/Owned.sol";
 import { EIP712 } from "../../utils/EIP712.sol";
-import { console2 } from "forge-std/Console2.sol";
 
 /**
     Contract is still a WIP. It is not yet ready for production use.
@@ -32,11 +31,11 @@ import { console2 } from "forge-std/Console2.sol";
 
     Several aspects need attention:
     - Standard arbitration settlement via arbitrary calldata
-    - Reentrancy guards
     - Locked tokens
     - Audit permissions
     - Release mechanism
     - Comments and general structure
+    - Agreement signature nonces / Nonce revoke mechanism
  */
 contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateralAgreement, EIP712 {
     using SignatureVerification for bytes;
@@ -90,15 +89,13 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
     /// @notice Create a new collateral agreement with given params.
     /// @param agreementSetup Initial agreement setup.
     /// @param joinPermits Array of signatures and nonce+deadline for the each party.
-    /// @param transferPermits Array of permit data for the transfer of the collateral tokens.
-    /// @param transferSignatures Array of signatures of the transfer permits.
+    /// @param permit2SignatureTransfer Struct for Permit2 setup for each party.
     /// @return id Id of the created agreement, generated from encoding hash of the address of the framework, hash of the terms and a provided salt.
     function createWithSignatures(
         AgreementSetup calldata agreementSetup,
         PartyPermit[] calldata joinPermits,
-        ISignatureTransfer.PermitBatchTransferFrom[] memory transferPermits,
-        bytes[] calldata transferSignatures
-    ) external returns (bytes32 id) {
+        Permit2SignatureTransfer[] calldata permit2SignatureTransfer
+    ) external nonReentrant returns (bytes32 id) {
         if (agreementSetup.parties.length != joinPermits.length) {
             revert InvalidPositionOrSignaturesLength();
         }
@@ -111,6 +108,8 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         Agreement storage newAgreement = agreements[id];
 
         DepositConfig memory depositConfig_ = depositConfig;
+
+        uint256 totalCollateral;
 
         for (uint256 i; i < agreementSetup.parties.length; ) {
             // verify nonces and deadline
@@ -126,10 +125,10 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
                 );
 
             permit2.permitTransferFrom(
-                transferPermits[i],
+                permit2SignatureTransfer[i].transferPermit,
                 transferDetails,
                 agreementSetup.parties[i].signer,
-                transferSignatures[i]
+                permit2SignatureTransfer[i].transferSignature
             );
 
             newAgreement.parties[agreementSetup.parties[i].signer] = Party(
@@ -137,15 +136,18 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
                 PARTY_STATUS_JOINED
             );
 
+            totalCollateral += agreementSetup.parties[i].collateral;
+
             unchecked {
                 ++i;
             }
         }
 
+        newAgreement.numParties = agreementSetup.parties.length;
         newAgreement.termsHash = agreementSetup.termsHash;
         newAgreement.token = agreementSetup.token;
-        newAgreement.deposit = depositConfig.amount;
-        newAgreement.termsHash = agreementSetup.termsHash;
+        newAgreement.deposit = depositConfig_.amount;
+        newAgreement.totalCollateral = totalCollateral;
         newAgreement.status = AGREEMENT_STATUS_ONGOING;
 
         emit AgreementCreated(id, agreementSetup.termsHash, agreementSetup.token);
@@ -157,7 +159,7 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         PartyPermit calldata partyPermit,
         ISignatureTransfer.PermitTransferFrom calldata transferPermit,
         bytes calldata permitSignature
-    ) external {
+    ) external nonReentrant {
         // verify nonces and deadline
         partyPermit.signature.verify(
             _hashTypedData(partySetup.hashWithNonceAndStatus(partyPermit, PARTY_STATUS_JOINED)),
@@ -211,8 +213,8 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         bytes32 id,
         PartySetup[] calldata partySetups,
         PartyPermit[] calldata partiesSignatures,
-        bool doReleaseTransfer
-    ) public {
+        bool doReleaseTransfers
+    ) public nonReentrant {
         Agreement storage agreement_ = agreements[id];
 
         if (agreement_.numParties != partySetups.length) {
@@ -236,8 +238,9 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
 
             agreement_.parties[msg.sender].status = PARTY_STATUS_FINALIZED;
 
-            if (doReleaseTransfer) {
-                _releaseTransfer();
+            if (doReleaseTransfers) {
+                _releaseTransfers(agreement_, partySetups[i].signer);
+                _clearPartyFromStorage(agreement_, partySetups[i].signer);
             }
 
             emit AgreementPartyUpdated(id, partySetups[i].signer, PARTY_STATUS_FINALIZED);
@@ -252,21 +255,66 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         emit AgreementFinalized(id);
     }
 
-    function release(bytes32 id) public {
+    function release(bytes32 id) public nonReentrant {
         Agreement storage agreement_ = agreements[id];
 
         _isJoinedParty(agreement_, msg.sender);
         _isFinalized(agreement_);
 
-        agreement_.parties[msg.sender].status = PARTY_STATUS_RELEASED;
+        _releaseTransfers(agreement_, msg.sender);
+        _clearPartyFromStorage(agreement_, msg.sender);
 
-        _releaseTransfer();
-
-        // emit AgreementReleased(id, msg.sender);
+        emit AgreementPartyUpdated(id, msg.sender, PARTY_STATUS_RELEASED);
     }
 
     function settleDispute(bytes32 id, bytes calldata settlement) public override {
-        // TODO
+        if (msg.sender != arbitrator) revert NotArbitrator();
+
+        Agreement storage agreement = agreements[id];
+        _isDisputed(agreement);
+
+        PartySetup[] memory settlementSetup = abi.decode(settlement, (PartySetup[]));
+
+        uint256 totalCollateral;
+        uint256 i;
+
+        if (settlementSetup.length != agreement.numParties) {
+            if (
+                settlementSetup.length == agreement.numParties + 1 &&
+                settlementSetup[0].signer == depositConfig.recipient
+            ) {
+                // Arbitration fee exists
+                totalCollateral += settlementSetup[0].collateral;
+                unchecked {
+                    ++i;
+                }
+            } else {
+                revert InvalidSettlement();
+            }
+        }
+
+        for (; i < settlementSetup.length; ) {
+            totalCollateral += settlementSetup[i].collateral;
+
+            // The following checks: 1) Party exists in agreement 2) Party is not finalized (prevents duplicate parties in settlement)
+            if (
+                agreement.parties[settlementSetup[i].signer].status == 0 ||
+                agreement.parties[settlementSetup[i].signer].status == PARTY_STATUS_FINALIZED
+            ) {
+                revert InvalidSettlement();
+            }
+
+            agreement.parties[settlementSetup[i].signer].collateral = settlementSetup[i].collateral;
+            agreement.parties[settlementSetup[i].signer].status = PARTY_STATUS_FINALIZED;
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        if (totalCollateral != agreement.totalCollateral) revert InvalidSettlement();
+        agreement.status = AGREEMENT_STATUS_FINALIZED;
+        emit AgreementFinalized(id);
     }
 
     /* ====================================================================== */
@@ -279,15 +327,28 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
 
     /// @dev Check if the agreement provided is ongoing (or created).
     function _isOngoing(Agreement storage agreement_) internal view {
-        if (agreement_.status == AGREEMENT_STATUS_ONGOING) revert AgreementNotOngoing();
+        if (agreement_.status != AGREEMENT_STATUS_ONGOING) revert AgreementNotOngoing();
     }
 
     function _isFinalized(Agreement storage agreement) internal view {
         if (agreement.status != AGREEMENT_STATUS_FINALIZED) revert AgreementNotFinalized();
     }
 
-    function _releaseTransfer() internal {
-        // TODO
+    function _isDisputed(Agreement storage agreement) internal view {
+        if (agreement.status != AGREEMENT_STATUS_DISPUTED) revert AgreementNotDisputed();
+    }
+
+    function _releaseTransfers(Agreement storage agreement, address to) internal {
+        SafeTransferLib.safeTransfer(ERC20(agreement.token), to, agreement.parties[to].collateral);
+        if (agreement.parties[to].status != PARTY_STATUS_DISPUTED) {
+            SafeTransferLib.safeTransfer(ERC20(depositConfig.token), to, agreement.deposit);
+        }
+    }
+
+    function _clearPartyFromStorage(Agreement storage agreement, address party) internal {
+        agreement.parties[party].status = bytes32(0);
+        agreement.parties[party].collateral = 0;
+        agreement.numParties -= 1;
     }
 
     /// @dev Fill Permit2 transferDetails array for deposit & collateral transfer.

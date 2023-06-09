@@ -19,15 +19,14 @@ abstract contract AgreementFramework is IAgreementFramework, Owned {
     bytes32 public constant AGREEMENT_STATUS_FINALIZED =
         keccak256(abi.encodePacked("AGREEMENT_STATUS_FINALIZED"));
 
-    bytes32 public constant PARTY_STATUS_IDLE = keccak256(abi.encodePacked("PARTY_STATUS_IDLE"));
     bytes32 public constant PARTY_STATUS_JOINED =
         keccak256(abi.encodePacked("PARTY_STATUS_JOINED"));
     bytes32 public constant PARTY_STATUS_FINALIZED =
         keccak256(abi.encodePacked("PARTY_STATUS_FINALIZED"));
-    bytes32 public constant PARTY_STATUS_RELEASED =
-        keccak256(abi.encodePacked("PARTY_STATUS_RELEASED"));
     bytes32 public constant PARTY_STATUS_DISPUTED =
         keccak256(abi.encodePacked("PARTY_STATUS_DISPUTED"));
+    bytes32 public constant PARTY_STATUS_RELEASED =
+        keccak256(abi.encodePacked("PARTY_STATUS_RELEASED"));
 
     /// @inheritdoc IArbitrable
     address public arbitrator;

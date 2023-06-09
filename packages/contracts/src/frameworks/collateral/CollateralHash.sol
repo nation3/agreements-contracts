@@ -40,7 +40,9 @@ library CollateralHash {
             keccak256(
                 abi.encode(
                     UPDATE_PARTY_TYPEHASH,
-                    partySetup,
+                    keccak256(
+                        abi.encode(PARTY_SETUP_TYPEHASH, partySetup.signer, partySetup.collateral)
+                    ),
                     status,
                     partyPermit.nonce,
                     partyPermit.deadline

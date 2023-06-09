@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
+import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
+
 interface ICollateralAgreement {
     error InvalidPositionOrSignaturesLength();
     error NotPartySigner();
@@ -44,11 +46,12 @@ interface ICollateralAgreement {
         bytes32 termsHash;
         address token; // no hace falta guardarlo, pero se puede verificar que sea el mismo en cada operacion
         uint256 deposit; // la cantidad que postean todas las partes como deposito
-        uint256 balance;
+        uint256 totalCollateral;
         // address disputedBy;
         /// @dev Status of the agreement.
         bytes32 status;
         uint256 numParties;
+        address[] signers;
         mapping(address => Party) parties;
     }
 
@@ -63,5 +66,10 @@ interface ICollateralAgreement {
         AgreementSetup agreement;
         uint256 nonce;
         uint256 deadline;
+    }
+
+    struct Permit2SignatureTransfer {
+        ISignatureTransfer.PermitBatchTransferFrom transferPermit;
+        bytes transferSignature;
     }
 }
