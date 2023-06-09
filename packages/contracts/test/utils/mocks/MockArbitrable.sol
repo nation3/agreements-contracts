@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { IArbitrable, OnlyArbitrator } from "src/interfaces/IArbitrable.sol";
+import { IArbitrable } from "src/interfaces/IArbitrable.sol";
 import { PositionParams } from "src/interfaces/AgreementTypes.sol";
 import { SettlementPositionsMustMatch } from "src/interfaces/ArbitrationErrors.sol";
 
@@ -24,8 +24,8 @@ contract MockArbitrable is IArbitrable {
         return id;
     }
 
-    function settleDispute(bytes32 id, bytes calldata settlement) public {
-        if (msg.sender != arbitrator) revert OnlyArbitrator();
+    function settle(bytes32 id, bytes calldata settlement) public {
+        if (msg.sender != arbitrator) revert NotArbitrator();
         if (settlement.length <= 0) revert SettlementPositionsMustMatch();
         disputeStatus[id] = 2;
     }

@@ -17,13 +17,13 @@ import {
     SettlementPositionsMustMatch,
     SettlementBalanceMustMatch
 } from "../../interfaces/ArbitrationErrors.sol";
-import { IArbitrable, OnlyArbitrator } from "../../interfaces/IArbitrable.sol";
+import { IArbitrable } from "../../interfaces/IArbitrable.sol";
 import { ICollateralAgreement } from "./ICollateralAgreement.sol";
 
 import { AgreementFramework } from "../../frameworks/AgreementFramework.sol";
 import { DepositConfig } from "../../utils/interfaces/Deposits.sol";
 import { Owned } from "../../utils/Owned.sol";
-import { EIP712 } from "../../utils/EIP712.sol";
+import { EIP712WithNonces } from "../../utils/EIP712WithNonces.sol";
 
 /**
     Contract is still a WIP. It is not yet ready for production use.
@@ -37,7 +37,12 @@ import { EIP712 } from "../../utils/EIP712.sol";
     - Comments and general structure
     - Agreement signature nonces / Nonce revoke mechanism
  */
-contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateralAgreement, EIP712 {
+contract CollateralAgreement is
+    AgreementFramework,
+    ReentrancyGuard,
+    ICollateralAgreement,
+    EIP712WithNonces
+{
     using SignatureVerification for bytes;
     using SafeTransferLib for ERC20;
     // using Permit2Lib for ERC20;
@@ -53,7 +58,7 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
     DepositConfig public depositConfig;
 
     /// @dev Agreements by id
-    mapping(bytes32 => Agreement) internal agreements;
+    mapping(bytes32 => Agreement) public agreements;
 
     /* ====================================================================== */
     /*                                  VIEWS
@@ -68,7 +73,7 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
     constructor(
         ISignatureTransfer permit2_,
         address owner
-    ) Owned(owner) EIP712(keccak256("N3CollateralAgreement"), "1") {
+    ) Owned(owner) EIP712WithNonces(keccak256("N3CollateralAgreement"), "1") {
         permit2 = permit2_;
     }
 
@@ -112,7 +117,12 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         uint256 totalCollateral;
 
         for (uint256 i; i < agreementSetup.parties.length; ) {
-            // verify nonces and deadline
+            if (block.timestamp > joinPermits[i].deadline) {
+                revert SignatureExpired(joinPermits[i].deadline);
+            }
+
+            _useUnorderedNonce(agreementSetup.parties[i].signer, joinPermits[i].nonce);
+
             joinPermits[i].signature.verify(
                 _hashTypedData(joinPermits[i].hashWithAgreement(agreementHash)),
                 agreementSetup.parties[i].signer
@@ -160,7 +170,12 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         ISignatureTransfer.PermitTransferFrom calldata transferPermit,
         bytes calldata permitSignature
     ) external nonReentrant {
-        // verify nonces and deadline
+        if (block.timestamp > partyPermit.deadline) {
+            revert SignatureExpired(partyPermit.deadline);
+        }
+
+        _useUnorderedNonce(partySetup.signer, partyPermit.nonce);
+
         partyPermit.signature.verify(
             _hashTypedData(partySetup.hashWithNonceAndStatus(partyPermit, PARTY_STATUS_JOINED)),
             partySetup.signer
@@ -212,7 +227,7 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
     function finalizeAgreement(
         bytes32 id,
         PartySetup[] calldata partySetups,
-        PartyPermit[] calldata partiesSignatures,
+        PartyPermit[] calldata partySignatures,
         bool doReleaseTransfers
     ) public nonReentrant {
         Agreement storage agreement_ = agreements[id];
@@ -226,10 +241,16 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         uint i;
 
         for (; i < partySetups.length; ) {
-            partiesSignatures[i].signature.verify(
+            if (block.timestamp > partySignatures[i].deadline) {
+                revert SignatureExpired(partySignatures[i].deadline);
+            }
+
+            _useUnorderedNonce(partySetups[i].signer, partySignatures[i].nonce);
+
+            partySignatures[i].signature.verify(
                 _hashTypedData(
                     partySetups[i].hashWithNonceAndStatus(
-                        partiesSignatures[i],
+                        partySignatures[i],
                         PARTY_STATUS_FINALIZED
                     )
                 ),
@@ -267,7 +288,7 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         emit AgreementPartyUpdated(id, msg.sender, PARTY_STATUS_RELEASED);
     }
 
-    function settleDispute(bytes32 id, bytes calldata settlement) public override {
+    function settle(bytes32 id, bytes calldata settlement) public override {
         if (msg.sender != arbitrator) revert NotArbitrator();
 
         Agreement storage agreement = agreements[id];
@@ -296,7 +317,8 @@ contract CollateralAgreement is AgreementFramework, ReentrancyGuard, ICollateral
         for (; i < settlementSetup.length; ) {
             totalCollateral += settlementSetup[i].collateral;
 
-            // The following checks: 1) Party exists in agreement 2) Party is not finalized (prevents duplicate parties in settlement)
+            // The following checks: 1) Party exists in agreement
+            // 2) Party is not finalized (prevents duplicate parties in settlement)
             if (
                 agreement.parties[settlementSetup[i].signer].status == 0 ||
                 agreement.parties[settlementSetup[i].signer].status == PARTY_STATUS_FINALIZED

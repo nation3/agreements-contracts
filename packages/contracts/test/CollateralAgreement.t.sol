@@ -8,19 +8,19 @@ import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.so
 
 import { SafeCast160 } from "permit2/src/libraries/SafeCast160.sol";
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
-// import { Permit2 } from "permit2/src/Permit2.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 
 import { PermitSignature, TokenPair } from "./utils/PermitSignature.sol";
 import { TokenProvider } from "./utils/TokenProvider.sol";
 
-import { OnlyArbitrator } from "../src/interfaces/IArbitrable.sol";
+import { IArbitrable } from "../src/interfaces/IArbitrable.sol";
 import { DepositConfig } from "../src/utils/interfaces/Deposits.sol";
 
 import { CollateralAgreement } from "../src/frameworks/collateral/CollateralAgreement.sol";
 import { ICollateralAgreement } from "../src/frameworks/collateral/ICollateralAgreement.sol";
 import { CollateralHash } from "../src/frameworks/collateral/CollateralHash.sol";
 import { IAgreementFramework } from "../src/frameworks/IAgreementFramework.sol";
+import { EIP712WithNonces } from "../src/utils/EIP712WithNonces.sol";
 
 import { IEIP712 } from "./utils/IERC712.sol";
 import { console2 } from "forge-std/Console2.sol";
@@ -51,24 +51,26 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
     }
 
     function testJoinWithSignatures() public {
-        _joinAgreementWithNParties(10);
+        _joinAgreementWithNParties(10, 0);
     }
 
+    // AGREEMENT DISPUTES //
+
     function testDisputeAgreementByJoinedParty() public {
-        bytes32 agreementId = _joinAgreementWithNParties(2);
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
         vm.prank(testSubjects[0]);
         framework.disputeAgreement(agreementId);
     }
 
     function testRevertWhenDisputeAgreementByNotJoinedParty() public {
-        bytes32 agreementId = _joinAgreementWithNParties(2);
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
         vm.prank(testSubjects[2]);
         vm.expectRevert(IAgreementFramework.PartyNotJoined.selector);
         framework.disputeAgreement(agreementId);
     }
 
     function testRevertWhenDisputeAgreementByTwoJoinedParties() public {
-        bytes32 agreementId = _joinAgreementWithNParties(2);
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
         vm.prank(testSubjects[0]);
         framework.disputeAgreement(agreementId);
         vm.prank(testSubjects[1]);
@@ -76,19 +78,333 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
         framework.disputeAgreement(agreementId);
     }
 
+    // AGREEMENT FINALIZATIONS //
+
     function testFinalizeAgreement() public {
-        bytes32 agreementId = _joinAgreementWithNParties(2);
-        _finalizeAgreementWithNParties(2, agreementId, false);
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        _finalizeAgreementWithNParties(2, agreementId, 1, false);
     }
 
     function testRevertWhenPartialFinalizeAgreement() public {
-        bytes32 agreementId = _joinAgreementWithNParties(2);
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
         vm.expectRevert(ICollateralAgreement.InvalidPartySetupLength.selector);
-        _finalizeAgreementWithNParties(1, agreementId, false);
+        _finalizeAgreementWithNParties(1, agreementId, 1, false);
     }
 
+    // AGREEMENT RELEASE //
+
+    function testReleaseFunds() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        _finalizeAgreementWithNParties(2, agreementId, 1, false);
+        vm.prank(testSubjects[0]);
+        framework.release(agreementId);
+    }
+
+    function testRevertWhenDoubleRelease() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        _finalizeAgreementWithNParties(2, agreementId, 1, false);
+        vm.startPrank(testSubjects[0]);
+        framework.release(agreementId);
+        vm.expectRevert(IAgreementFramework.PartyNotJoined.selector);
+        framework.release(agreementId);
+    }
+
+    function testRevertWhenFinalizationReleaseAndThenRelease() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        _finalizeAgreementWithNParties(2, agreementId, 1, true);
+        vm.prank(testSubjects[0]);
+        vm.expectRevert(IAgreementFramework.PartyNotJoined.selector);
+        framework.release(agreementId);
+    }
+
+    function testRevertWhenReleaseByNotJoinedParty() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        _finalizeAgreementWithNParties(2, agreementId, 1, false);
+        vm.prank(testSubjects[3]);
+        vm.expectRevert(IAgreementFramework.PartyNotJoined.selector);
+        framework.release(agreementId);
+    }
+
+    function testRevertWhenReleaseOnDisputedAgreement() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        vm.prank(testSubjects[1]);
+        framework.disputeAgreement(agreementId);
+        vm.expectRevert(IAgreementFramework.AgreementNotFinalized.selector);
+        vm.prank(testSubjects[0]);
+        framework.release(agreementId);
+    }
+
+    // AGREEMENT SETTLEMENT //
+
+    function testSettlement() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](2);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+
+        vm.prank(arbitrator);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testSettlementWithAllCollateralToOneParty() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](2);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17 * 2);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 0);
+
+        vm.prank(arbitrator);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testSettlementWithMixedCollateralSetup() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](2);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17 - 1e15);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17 + 1e15);
+
+        vm.prank(arbitrator);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testSettlementWithArbitrationFee() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[1]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(arbitrator, 1e17); // arbitrator
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[1], 0);
+
+        vm.prank(arbitrator);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testSettlementWithMaxArbitrationFee() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[1]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(arbitrator, 1e17 * 2); // arbitrator
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[0], 0);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[1], 0);
+
+        vm.prank(arbitrator);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenNotArbitrator() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+        vm.expectRevert(IArbitrable.NotArbitrator.selector);
+        framework.settle(agreementId, new bytes(0));
+    }
+
+    function testRevertWhenSettlementIsEmtpy() public {
+        bytes32 agreementId = _joinAgreementWithNParties(3, 0);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](2);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(bytes("")); // Runtime EVM error
+        framework.settle(agreementId, new bytes(0));
+    }
+
+    function testRevertWhenSettlementOnNonDisputedAgreement() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](2);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IAgreementFramework.AgreementNotDisputed.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementOnFinalizedAgreement() public {
+        bytes32 agreementId = _joinAgreementWithNParties(3, 0);
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[2], 1e17);
+
+        _finalizeAgreementWithNParties(3, agreementId, 1, false);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IAgreementFramework.AgreementNotDisputed.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementLengthIsLower() public {
+        bytes32 agreementId = _joinAgreementWithNParties(3, 0);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](2);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IArbitrable.InvalidSettlement.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementLengthIsHigher() public {
+        bytes32 agreementId = _joinAgreementWithNParties(3, 0);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](4);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[2], 1e17);
+        partySetups[3] = ICollateralAgreement.PartySetup(testSubjects[3], 1e17);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IArbitrable.InvalidSettlement.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementSetupIsHigherThanTotalCollateral() public {
+        bytes32 agreementId = _joinAgreementWithNParties(3, 0);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[2], 1e17 + 1); // Higher
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IArbitrable.InvalidSettlement.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementSetupIsLowerThanTotalCollateral() public {
+        bytes32 agreementId = _joinAgreementWithNParties(3, 0);
+        vm.prank(testSubjects[0]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17 - 1); // Lower
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 1e17);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[2], 1e17);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IArbitrable.InvalidSettlement.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementFeeIsNotSetToArbitrator() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[1]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(address(0x1111), 1e17); // arbitrator
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[1], 0);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IArbitrable.InvalidSettlement.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementFeeIsInTheWrongOrder() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[1]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[1], 0);
+        partySetups[2] = ICollateralAgreement.PartySetup(arbitrator, 1e17);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IArbitrable.InvalidSettlement.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    function testRevertWhenSettlementFeeIsHigher() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[1]);
+        framework.disputeAgreement(agreementId);
+
+        ICollateralAgreement.PartySetup[]
+            memory partySetups = new ICollateralAgreement.PartySetup[](3);
+        partySetups[0] = ICollateralAgreement.PartySetup(arbitrator, 1e17 + 1);
+        partySetups[1] = ICollateralAgreement.PartySetup(testSubjects[0], 1e17);
+        partySetups[2] = ICollateralAgreement.PartySetup(testSubjects[1], 0);
+
+        vm.prank(arbitrator);
+        vm.expectRevert(IArbitrable.InvalidSettlement.selector);
+        framework.settle(agreementId, abi.encode(partySetups));
+    }
+
+    // EIP712 SIGNATURES //
+
+    function testUnorderedNonce() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 4);
+        _finalizeAgreementWithNParties(2, agreementId, 0, false);
+    }
+
+    function testRevertOnRevokedNonce() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+
+        vm.prank(testSubjects[0]);
+        framework.invalidateUnorderedNonces(0, 1 << 4);
+        vm.expectRevert(EIP712WithNonces.InvalidNonce.selector);
+        _finalizeAgreementWithNParties(2, agreementId, 4, true);
+    }
+
+    function testRevertWhenNonceIsUsedTwice() public {
+        bytes32 agreementId = _joinAgreementWithNParties(2, 0);
+        vm.expectRevert(EIP712WithNonces.InvalidNonce.selector);
+        _finalizeAgreementWithNParties(2, agreementId, 0, false);
+    }
+
+    // INTERNAL FUNCTIONS //
+
     function _joinAgreementWithNParties(
-        uint256 numberOfParties
+        uint256 numberOfParties,
+        uint256 nonce
     ) internal returns (bytes32 agreementId) {
         ICollateralAgreement.PartySetup[] memory parties = new ICollateralAgreement.PartySetup[](
             numberOfParties
@@ -122,7 +438,7 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
         for (uint i; i < numberOfParties; ++i) {
             joinPermits[i] = _getPartyPermitForAgreementSetup(
                 agreementSetup,
-                0,
+                nonce,
                 block.timestamp + 1 days,
                 testSubjectKeys[i]
             );
@@ -152,6 +468,7 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
     function _finalizeAgreementWithNParties(
         uint256 numberOfParties,
         bytes32 agreementId,
+        uint256 nonce,
         bool doTransfers
     ) internal {
         ICollateralAgreement.PartySetup[]
@@ -167,12 +484,12 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
                 signature: _getPartySignatureForUpdateParty(
                     partySetups[i],
                     keccak256(abi.encodePacked("PARTY_STATUS_FINALIZED")),
-                    0,
+                    nonce,
                     block.timestamp + 1 days,
                     testSubjectKeys[i],
                     COLLATERAL_DOMAIN_SEPARATOR
                 ),
-                nonce: 0,
+                nonce: nonce,
                 deadline: block.timestamp + 1 days
             });
         }
@@ -213,8 +530,6 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, msgHash);
         return bytes.concat(r, s, bytes1(v));
     }
-
-    // MOVE THIS TO ANOTHER FILE
 
     function _getPartyPermitForAgreementSetup(
         ICollateralAgreement.AgreementSetup memory agreementSetup,

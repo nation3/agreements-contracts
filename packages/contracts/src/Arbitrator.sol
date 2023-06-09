@@ -113,7 +113,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         resolution_.status = ResolutionStatus.Executed;
 
         // framework.settleDispute(dispute, settlement);
-        framework.settleDispute(dispute, abi.encode(settlement)); // Fix this.
+        framework.settle(dispute, abi.encode(settlement)); // Fix this.
 
         emit ResolutionExecuted(id, settlementEncoding);
     }
