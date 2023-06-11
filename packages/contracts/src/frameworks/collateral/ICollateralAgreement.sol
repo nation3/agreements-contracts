@@ -44,15 +44,22 @@ interface ICollateralAgreement {
 
     struct Agreement {
         bytes32 termsHash;
-        address token; // no hace falta guardarlo, pero se puede verificar que sea el mismo en cada operacion
-        uint256 deposit; // la cantidad que postean todas las partes como deposito
+        address token;
+        uint256 deposit;
         uint256 totalCollateral;
-        // address disputedBy;
         /// @dev Status of the agreement.
         bytes32 status;
         uint256 numParties;
-        address[] signers;
         mapping(address => Party) parties;
+    }
+
+    struct AgreementData {
+        bytes32 termsHash;
+        address token;
+        uint256 deposit;
+        uint256 totalCollateral;
+        bytes32 status;
+        uint256 numParties;
     }
 
     struct PartyPermit {

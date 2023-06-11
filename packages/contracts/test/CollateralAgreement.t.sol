@@ -2,13 +2,14 @@
 pragma solidity ^0.8.17;
 
 import { Test } from "forge-std/Test.sol";
+import { console2 } from "forge-std/Console2.sol";
 
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
-
-import { SafeCast160 } from "permit2/src/libraries/SafeCast160.sol";
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
+
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
+import { IEIP712 } from "./utils/IERC712.sol";
 
 import { PermitSignature, TokenPair } from "./utils/PermitSignature.sol";
 import { TokenProvider } from "./utils/TokenProvider.sol";
@@ -22,12 +23,7 @@ import { CollateralHash } from "../src/frameworks/collateral/CollateralHash.sol"
 import { IAgreementFramework } from "../src/frameworks/IAgreementFramework.sol";
 import { EIP712WithNonces } from "../src/utils/EIP712WithNonces.sol";
 
-import { IEIP712 } from "./utils/IERC712.sol";
-import { console2 } from "forge-std/Console2.sol";
-
 contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
-    using SafeCast160 for uint256;
-
     CollateralAgreement framework;
 
     bytes32 PERMIT2_DOMAIN_SEPARATOR;
@@ -51,7 +47,26 @@ contract CollateralAgreementTest is Test, TokenProvider, PermitSignature {
     }
 
     function testJoinWithSignatures() public {
-        _joinAgreementWithNParties(10, 0);
+        bytes32 agreementId = _joinAgreementWithNParties(10, 0);
+
+        ICollateralAgreement.AgreementData memory agreement = framework.agreementData(agreementId);
+
+        assertEq(agreement.termsHash, keccak256("terms"));
+        assertEq(agreement.token, address(tokenA));
+        assertEq(agreement.deposit, 1e17);
+        assertEq(agreement.totalCollateral, 1e17 * 10);
+        assertEq(agreement.status, keccak256(abi.encodePacked("AGREEMENT_STATUS_ONGOING")));
+        assertEq(agreement.numParties, 10);
+
+        for (uint256 i; i < 10; ++i) {
+            ICollateralAgreement.Party memory party = framework.partyInAgreement(
+                agreementId,
+                testSubjects[i]
+            );
+
+            assertEq(party.collateral, 1e17);
+            assertEq(party.status, keccak256(abi.encodePacked("PARTY_STATUS_JOINED")));
+        }
     }
 
     // AGREEMENT DISPUTES //

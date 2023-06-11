@@ -3,15 +3,14 @@ pragma solidity ^0.8.17;
 
 import { IAllowanceTransfer } from "permit2/src/interfaces/IAllowanceTransfer.sol";
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
+import { SignatureVerification } from "permit2/src/libraries/SignatureVerification.sol";
 
-// import { Permit2Lib } from "permit2/src/libraries/Permit2Lib.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { ReentrancyGuard } from "solmate/src/utils/ReentrancyGuard.sol";
 import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
 
-import { SignatureVerification } from "permit2/src/libraries/SignatureVerification.sol";
-
 import { CollateralHash } from "./CollateralHash.sol";
+import { Owned } from "../../utils/Owned.sol";
 
 import {
     SettlementPositionsMustMatch,
@@ -22,7 +21,6 @@ import { ICollateralAgreement } from "./ICollateralAgreement.sol";
 
 import { AgreementFramework } from "../../frameworks/AgreementFramework.sol";
 import { DepositConfig } from "../../utils/interfaces/Deposits.sol";
-import { Owned } from "../../utils/Owned.sol";
 import { EIP712WithNonces } from "../../utils/EIP712WithNonces.sol";
 
 /**
@@ -58,13 +56,30 @@ contract CollateralAgreement is
     DepositConfig public depositConfig;
 
     /// @dev Agreements by id
-    mapping(bytes32 => Agreement) public agreements;
+    mapping(bytes32 => Agreement) internal agreements;
 
     /* ====================================================================== */
     /*                                  VIEWS
     /* ====================================================================== */
 
-    // TODO
+    function agreementData(bytes32 id) external view returns (AgreementData memory data) {
+        Agreement storage agreement = agreements[id];
+
+        data = AgreementData(
+            agreement.termsHash,
+            agreement.token,
+            agreement.deposit,
+            agreement.totalCollateral,
+            agreement.status,
+            agreement.numParties
+        );
+    }
+
+    function partyInAgreement(bytes32 id, address party) external view returns (Party memory data) {
+        Agreement storage agreement = agreements[id];
+
+        data = agreement.parties[party];
+    }
 
     /* ====================================================================== */
     /*                                  SETUP
