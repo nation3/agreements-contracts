@@ -14,4 +14,9 @@ interface IArbitrable {
     /// @param id Id of the dispute to settle.
     /// @param settlement ABI-encoded settlement configuration. Varies by agreement kind.
     function settle(bytes32 id, bytes calldata settlement) external;
+
+    /// @notice Checks whether an address is capable of appealing
+    /// @param id of the agreement/dispute to settle
+    /// @param user Address to check
+    function canAppeal(bytes32 id, address user) external view returns (bool);
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
-import { IArbitrable } from "../interfaces/IArbitrable.sol";
+import { IArbitrable } from "../arbitrator/IArbitrable.sol";
 
 interface IAgreementFramework is IArbitrable {
     error PartyNotJoined();

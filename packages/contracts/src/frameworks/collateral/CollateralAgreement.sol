@@ -12,15 +12,11 @@ import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
 import { CollateralHash } from "./CollateralHash.sol";
 import { Owned } from "../../utils/Owned.sol";
 
-import {
-    SettlementPositionsMustMatch,
-    SettlementBalanceMustMatch
-} from "../../interfaces/ArbitrationErrors.sol";
-import { IArbitrable } from "../../interfaces/IArbitrable.sol";
+import { IArbitrable } from "../../arbitrator/IArbitrable.sol";
 import { ICollateralAgreement } from "./ICollateralAgreement.sol";
 
 import { AgreementFramework } from "../../frameworks/AgreementFramework.sol";
-import { DepositConfig } from "../../utils/interfaces/Deposits.sol";
+import { DepositConfig } from "../../arbitrator/ArbitratorTypes.sol";
 import { EIP712WithNonces } from "../../utils/EIP712WithNonces.sol";
 
 /**
@@ -81,6 +77,10 @@ contract CollateralAgreement is
         data = agreement.parties[party];
     }
 
+    function canAppeal(bytes32 id, address user) external view returns (bool) {
+        this.partyInAgreement(id, user);
+    }
+
     /* ====================================================================== */
     /*                                  SETUP
     /* ====================================================================== */
@@ -122,8 +122,7 @@ contract CollateralAgreement is
 
         bytes32 agreementHash = agreementSetup.hash();
 
-        // ID using the agreement hash and msg.sender to prevent front-running
-        id = keccak256(abi.encode(msg.sender, agreementHash));
+        id = keccak256(abi.encodePacked(address(this), agreementHash));
 
         Agreement storage newAgreement = agreements[id];
 

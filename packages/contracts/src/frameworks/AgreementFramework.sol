@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { IArbitrable } from "../interfaces/IArbitrable.sol";
+import { IArbitrable } from "../arbitrator/IArbitrable.sol";
 import { IAgreementFramework } from "./IAgreementFramework.sol";
 import { Owned } from "../utils/Owned.sol";
 

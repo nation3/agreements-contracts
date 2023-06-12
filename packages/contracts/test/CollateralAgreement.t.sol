@@ -14,8 +14,8 @@ import { IEIP712 } from "./utils/IERC712.sol";
 import { PermitSignature, TokenPair } from "./utils/PermitSignature.sol";
 import { TokenProvider } from "./utils/TokenProvider.sol";
 
-import { IArbitrable } from "../src/interfaces/IArbitrable.sol";
-import { DepositConfig } from "../src/utils/interfaces/Deposits.sol";
+import { IArbitrable } from "../src/arbitrator/IArbitrable.sol";
+import { DepositConfig } from "../src/arbitrator/ArbitratorTypes.sol";
 
 import { CollateralAgreement } from "../src/frameworks/collateral/CollateralAgreement.sol";
 import { ICollateralAgreement } from "../src/frameworks/collateral/ICollateralAgreement.sol";
