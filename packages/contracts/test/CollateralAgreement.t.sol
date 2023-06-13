@@ -9,7 +9,7 @@ import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.so
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
 
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
-import { IEIP712 } from "./utils/IERC712.sol";
+import { IEIP712 } from "./utils/IEIP712.sol";
 
 import { PermitSignature, TokenPair } from "./utils/PermitSignature.sol";
 import { TokenProvider } from "./utils/TokenProvider.sol";

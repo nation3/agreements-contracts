@@ -11,7 +11,7 @@ import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.so
 
 import { TokenProvider } from "./utils/TokenProvider.sol";
 import { PermitSignature, TokenPair } from "./utils/PermitSignature.sol";
-import { IEIP712 } from "./utils/IERC712.sol";
+import { IEIP712 } from "./utils/IEIP712.sol";
 
 // TODO: Come back to do more tests
 contract N3VaultTest is Test, TokenProvider, PermitSignature {

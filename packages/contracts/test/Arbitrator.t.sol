@@ -15,7 +15,7 @@ import { ResolutionStatus, Resolution } from "src/arbitrator/ArbitratorTypes.sol
 
 import { DepositConfig } from "src/arbitrator/ArbitratorTypes.sol";
 import { Arbitrator } from "src/arbitrator/Arbitrator.sol";
-import { IEIP712 } from "./utils/IERC712.sol";
+import { IEIP712 } from "./utils/IEIP712.sol";
 import { IArbitrator } from "src/arbitrator/IArbitrator.sol";
 import { ICollateralAgreement } from "src/frameworks/collateral/ICollateralAgreement.sol";
 
