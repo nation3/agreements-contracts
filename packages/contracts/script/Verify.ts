@@ -34,9 +34,9 @@ const verifyCollateralAgreementFramework = async (address: string, path: string)
 }
 const main = async () => {
   console.log("Contract verification...")
-  await verifyArbitrationToken("0xF35121DAf5895bc3595a8271Ab8a746E2df4403b", "lib/solmate/src/test/utils/mocks/MockERC20.sol:MockERC20")
-  await verifyArbitrator("0xb6deAC61E2011301D771750368d2616df9941C67", "src/Arbitrator.sol:Arbitrator")
-  await verifyCollateralAgreementFramework("0x663cF9E09A82057defC2d574472B010b4d9e9Cf6", "src/frameworks/CollateralAgreement.sol:CollateralAgreement")
+  await verifyArbitrationToken("0x23Ca3002706b71a440860E3cf8ff64679A00C9d7", "lib/solmate/src/test/utils/mocks/MockERC20.sol:MockERC20")
+  await verifyArbitrator("0xBe67cEdCD1FE38aac8a5781A51250FDeFB344E6C", "src/Arbitrator.sol:Arbitrator")
+  await verifyCollateralAgreementFramework("0xD96aA6e2568f4e9632D2A5234Bb8410ca7609a27", "src/frameworks/CollateralAgreement.sol:CollateralAgreement")
 }
 main().catch((error) => {
   console.error(error);
