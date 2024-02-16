@@ -59,5 +59,5 @@ Alternatively, we can use the Verify.ts script to verify contracts:
 ts-node script/Verify.ts
 ```
 
-You can find contract arguments on Etherscan
+You can find constructor arguments on Etherscan
 ![image](https://github.com/nation3/jurisdiction/assets/42999269/36b465e6-bd92-4f97-a46a-3bffcf032514)
