@@ -54,7 +54,7 @@ jq .input build-info/*.json > inputs.json;
 rm -r build-info;
 ```
 
-Alternatively, we can use the Verify.ts script to verify contracts."
+Alternatively, we can use the Verify.ts script to verify contracts:
 ```
 ts-node script/Verify.ts
 ```
