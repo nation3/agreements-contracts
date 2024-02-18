@@ -25,6 +25,10 @@ forge test
 ```
 
 ## Deployment
+Before deployment, you should specify the ARBITRATION_TOKEN in script/deploy.sol, in this case, we use the $NATION token 
+```
+    address ARBITRATION_TOKEN = 0x333A4823466879eeF910A04D473505da62142069; // Mainnet
+```
 
 Run the deploy script first to verify that can be broadcasted:
 ```
@@ -49,3 +53,11 @@ forge build --force --optimize --optimizer-runs 20000 --build-info --build-info-
 jq .input build-info/*.json > inputs.json;
 rm -r build-info;
 ```
+
+Alternatively, we can use the Verify.ts script to verify contracts:
+```
+ts-node script/Verify.ts
+```
+
+You can find constructor arguments on Etherscan
+![image](https://github.com/nation3/jurisdiction/assets/42999269/36b465e6-bd92-4f97-a46a-3bffcf032514)
