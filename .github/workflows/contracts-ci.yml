@@ -25,7 +25,7 @@ jobs:
         with:
           version: nightly
       - name: Run Forge build
-      - run: |
+        run: |
           forge --version
           forge build --via-ir
         id: build
