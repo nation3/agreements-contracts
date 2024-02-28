@@ -8,4 +8,4 @@ See https://github.com/nation3/agreements-app
 
 ## Documentation
 
-https://github.com/nation3/agreements-app/tree/main/docs
+https://github.com/nation3/agreements-app/blob/main/README.md#documentation
