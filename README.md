@@ -1,4 +1,4 @@
-# Nation3 Agreements
+# Nation3 Agreement Smart Contracts
 
 This repository contains the smart contracts and core infrastructure for the Nation3 Agreements.
 
