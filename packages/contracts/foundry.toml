@@ -4,5 +4,5 @@ out = 'out'
 libs = ['lib']
 solc = "0.8.17"
 fs_permissions = [{ access = "read-write", path = "./deployments/"}]
-gas_reports = ["CollateralAgreementFramework", "Arbitrator"]
+gas_reports = ["CollateralAgreement", "Arbitrator", "N3Vault"]
 libraries = ["src/libraries/CriteriaResolution.sol:CriteriaResolution:0x17c1e395FE81a90af2D0289a009317D5aCB98f9F"]

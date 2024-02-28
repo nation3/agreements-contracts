@@ -1,32 +1,34 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { IArbitrable, OnlyArbitrator } from "src/interfaces/IArbitrable.sol";
-import { PositionParams } from "src/interfaces/AgreementTypes.sol";
-import { SettlementPositionsMustMatch } from "src/interfaces/ArbitrationErrors.sol";
+import { IArbitrable } from "src/arbitrator/IArbitrable.sol";
+import { IArbitrator } from "src/arbitrator/IArbitrator.sol";
 
 contract MockArbitrable is IArbitrable {
     mapping(bytes32 => uint8) public disputeStatus;
-    uint256 internal counter;
+    uint256 internal idCounter;
     address public arbitrator;
     uint256 public arbitrationFee;
-
-    error PositionsMustMatch();
 
     function setUp(address arbitrator_) public {
         arbitrator = arbitrator_;
     }
 
     function createDispute() public returns (bytes32) {
-        bytes32 id = bytes32(counter);
+        bytes32 id = keccak256(abi.encode(idCounter));
         disputeStatus[id] = 1;
-        counter += 1;
+        idCounter += 1;
         return id;
     }
 
-    function settleDispute(bytes32 id, PositionParams[] calldata settlement) public {
-        if (msg.sender != arbitrator) revert OnlyArbitrator();
-        if (settlement.length <= 0) revert SettlementPositionsMustMatch();
+    function settle(bytes32 id, bytes calldata settlement) public {
+        if (msg.sender != arbitrator) revert NotArbitrator();
+        // TODO: Update this
+        if (settlement.length <= 0) revert IArbitrator.SettlementPositionsMustMatch();
         disputeStatus[id] = 2;
+    }
+
+    function canAppeal(bytes32 id, address user) public view returns (bool) {
+        return true;
     }
 }

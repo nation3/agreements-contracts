@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
+import { console2 } from "forge-std/console2.sol";
+
 import { ISignatureTransfer } from "permit2/src/interfaces/ISignatureTransfer.sol";
 
-import { Permit2 } from "permit2/src/Permit2.sol";
+import { ResolutionStatus, Resolution } from "src/arbitrator/ArbitratorTypes.sol";
+import { IArbitrable } from "src/arbitrator/IArbitrable.sol";
+import { IArbitrator } from "src/arbitrator/IArbitrator.sol";
 
-import { PositionParams } from "src/interfaces/AgreementTypes.sol";
-import { ResolutionStatus, Resolution } from "src/interfaces/ArbitrationTypes.sol";
-import "src/interfaces/ArbitrationErrors.sol";
-import { IArbitrable } from "src/interfaces/IArbitrable.sol";
-import { IArbitrator } from "src/interfaces/IArbitrator.sol";
-
-import { DepositConfig } from "src/utils/interfaces/Deposits.sol";
+import { DepositConfig } from "src/arbitrator/ArbitratorTypes.sol";
 import { Controlled } from "src/utils/Controlled.sol";
 import { Toggleable } from "src/utils/Toggleable.sol";
 
@@ -26,7 +24,7 @@ import { Toggleable } from "src/utils/Toggleable.sol";
 /// Anyone can execute resolutions.
 contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @notice Address of the Permit2 contract deployment.
-    Permit2 public immutable permit2;
+    ISignatureTransfer public immutable permit2;
 
     /// @notice Appeals deposits configuration.
     DepositConfig public deposits;
@@ -44,7 +42,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         return resolution[id];
     }
 
-    constructor(Permit2 permit2_, address owner) Controlled(owner, owner) {
+    constructor(ISignatureTransfer permit2_, address owner) Controlled(owner, owner) {
         permit2 = permit2_;
     }
 
@@ -68,7 +66,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         IArbitrable framework,
         bytes32 dispute,
         string calldata metadataURI,
-        PositionParams[] calldata settlement
+        bytes calldata settlement
     ) public isEnabled onlyController returns (bytes32 id) {
         id = keccak256(abi.encodePacked(framework, dispute));
         Resolution storage resolution_ = resolution[id];
@@ -89,10 +87,10 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @inheritdoc IArbitrator
     function executeResolution(
         IArbitrable framework,
-        bytes32 dispute,
-        PositionParams[] calldata settlement
+        bytes32 agreement,
+        bytes calldata settlement
     ) public isEnabled {
-        bytes32 id = keccak256(abi.encodePacked(framework, dispute));
+        bytes32 id = keccak256(abi.encodePacked(framework, agreement));
         Resolution storage resolution_ = resolution[id];
 
         if (resolution_.status == ResolutionStatus.Appealed) {
@@ -112,9 +110,12 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
             revert SettlementPositionsMustMatch();
         }
 
+        console2.logBytes32(id);
+
         resolution_.status = ResolutionStatus.Executed;
 
-        framework.settleDispute(dispute, settlement);
+        // framework.settleDispute(dispute, settlement);
+        framework.settle(agreement, settlement); // Fix this.
 
         emit ResolutionExecuted(id, settlementEncoding);
     }
@@ -122,7 +123,7 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
     /// @inheritdoc IArbitrator
     function appealResolution(
         bytes32 id,
-        PositionParams[] calldata settlement,
+        bytes calldata settlement,
         ISignatureTransfer.PermitTransferFrom memory permit,
         bytes calldata signature
     ) external {
@@ -144,7 +145,8 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         if (resolution_.settlement != settlementEncoding) {
             revert SettlementPositionsMustMatch();
         }
-        if (!_isParty(msg.sender, settlement)) revert NoPartOfSettlement();
+        // if (!_isParty(msg.sender, settlement)) revert NotPartOfSettlement();
+        // call framework to check if msg.sender CAN appear, then appeal if so.
 
         resolution_.status = ResolutionStatus.Appealed;
 
@@ -172,21 +174,5 @@ contract Arbitrator is IArbitrator, Controlled, Toggleable {
         resolution_.status = ResolutionStatus.Endorsed;
 
         emit ResolutionEndorsed(id, settlement);
-    }
-
-    /* ====================================================================== */
-    /*                              INTERNAL UTILS
-    /* ====================================================================== */
-
-    /// @dev Check if an account is part of a settlement.
-    /// @param account Address to check.
-    /// @param settlement Array of positions.
-    function _isParty(
-        address account,
-        PositionParams[] calldata settlement
-    ) internal pure returns (bool found) {
-        for (uint256 i = 0; !found && i < settlement.length; i++) {
-            if (settlement[i].party == account) found = true;
-        }
     }
 }
