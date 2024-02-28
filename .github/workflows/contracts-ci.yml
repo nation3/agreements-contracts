@@ -1,7 +1,6 @@
 name: Smart Contracts CI
 
 on:
-  workflow_dispatch:
   push:
     branches: ["main"]
   pull_request:
@@ -10,8 +9,10 @@ on:
 jobs:
   test:
     strategy:
-      fail-fast: true
-    runs-on: ubuntu-latest
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [18.x, 20.x] # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: ./packages/contracts
