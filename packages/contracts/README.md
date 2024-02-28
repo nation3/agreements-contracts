@@ -1,4 +1,4 @@
-# Nation3 Jurisdiction Smart Contracts
+# Nation3 Agreement Smart Contracts
 
 ## Local build & testing
 
@@ -25,9 +25,10 @@ forge test
 ```
 
 ## Deployment
-Before deployment, you should specify the ARBITRATION_TOKEN in script/deploy.sol, in this case, we use the $NATION token 
+
+Before deployment, you should specify the `ARBITRATION_TOKEN` in `script/deploy.sol`, in this case, we use the `$NATION` token 
 ```
-    address ARBITRATION_TOKEN = 0x333A4823466879eeF910A04D473505da62142069; // Mainnet
+address ARBITRATION_TOKEN = 0x333A4823466879eeF910A04D473505da62142069; // Mainnet
 ```
 
 Run the deploy script first to verify that can be broadcasted:
