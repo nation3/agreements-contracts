@@ -1,7 +1,6 @@
 name: Smart Contracts CI
 
 on:
-  workflow_dispatch:
   push:
     branches: ["main"]
   pull_request:
@@ -10,8 +9,10 @@ on:
 jobs:
   test:
     strategy:
-      fail-fast: true
-    runs-on: ubuntu-latest
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [18.x, 20.x] # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: ./packages/contracts
@@ -24,7 +25,7 @@ jobs:
         with:
           version: nightly
       - name: Run Forge build
-      - run: |
+        run: |
           forge --version
           forge build --via-ir
         id: build
@@ -35,6 +36,8 @@ jobs:
       - name: Run Forge coverage
         run: |
           forge coverage --report lcov
-      - uses: codecov/codecov-action@v3
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
         with:
-          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: nation3/agreements-contracts
