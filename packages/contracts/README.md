@@ -21,8 +21,9 @@ forge build --via-ir
 
 Run tests:
 ```
-forge test
+forge test --via-ir
 ```
+(You will need to use `--via-ir` to avoid stack too deep problems while building)
 
 ## Deployment
 
