@@ -31,7 +31,7 @@ jobs:
         id: build
       - name: Run Forge tests
         run: |
-          forge test
+          forge test --via-ir
         id: test
       - name: Run Forge coverage
         run: |
