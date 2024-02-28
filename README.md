@@ -5,3 +5,7 @@ This repository contains the smart contracts and core infrastructure for the Nat
 ## User Interface
 
 See https://github.com/nation3/agreements-app
+
+## Documentation
+
+https://github.com/nation3/agreements-app/tree/main/docs
