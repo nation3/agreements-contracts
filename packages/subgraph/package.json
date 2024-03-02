@@ -4,16 +4,19 @@
   "version": "0.1.0",
   "scripts": {
     "codegen": "graph codegen",
-    "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ nation3/nation3-court-subgraph",
+    "build-mainnet": "graph build --network mainnet",
+    "build-sepolia": "graph build --network sepolia",
+    "auth": "graph auth --product hosted-service b817467290d54bbe945230faa5afa3ac",
+    "deploy-mainnet": "graph deploy --product hosted-service nation3/nation3-agreements-mainnet",
+    "deploy-sepolia": "graph deploy --product hosted-service nation3/nation3-agreements-sepolia",
     "create-local": "graph create --node http://localhost:8020/ nation3/nation3-court-subgraph",
     "remove-local": "graph remove --node http://localhost:8020/ nation3/nation3-court-subgraph",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 nation3/nation3-court-subgraph",
     "test": "graph test"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.33.1",
-    "@graphprotocol/graph-ts": "0.27.0"
+    "@graphprotocol/graph-cli": "^0.68.4",
+    "@graphprotocol/graph-ts": "^0.33.0"
   },
   "devDependencies": {
     "matchstick-as": "^0.5.0",
